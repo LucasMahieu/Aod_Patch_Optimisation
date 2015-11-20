@@ -1,9 +1,11 @@
+// New one OggEnc Modified for 4MMAOD
 /* OggEnc
  *
  * This program is distributed under the GNU General Public License, version 2.
  * A copy of this license is included with this source.
  *
- * Copyright 2000-2002, Michael Smith <msmith@xiph.org>
+ * Attempting a new version to allow patch
+	Copyright 2000-2002, Michael Smith <msmith@xiph.org>
  *
  * Portions from Vorbize, (c) Kenneth Arnold <kcarnold@yahoo.com>
  * and libvorbis examples, (c) Monty <monty@xiph.org>
@@ -18,12 +20,13 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
+#include <string.h>
+
 
 struct option
 {
@@ -55,13 +58,6 @@ extern int _getopt_internal (int ___argc, char *const *___argv,
                              const char *__shortopts,
                              const struct option *__longopts, int *__longind,
                              int __long_only);
-
-
-#define setbinmode(x) {}
-#define DEFAULT_NAMEFMT_REMOVE "/"
-#define DEFAULT_NAMEFMT_REPLACE NULL
-
-#define __ENCODE_H
 
 /********************************************************************
  *                                                                  *
@@ -116,6 +112,16 @@ extern int _getopt_internal (int ___argc, char *const *___argv,
  last mod: $Id: os_types.h,v 1.14 2003/09/02 05:09:14 xiphmont Exp $
 
  ********************************************************************/
+
+
+
+#define setbinmode(x) {}
+#define DEFAULT_NAMEFMT_REMOVE "/"
+#define DEFAULT_NAMEFMT_REPLACE NULL
+
+#define __ENCODE_H
+
+
 #define _OS_TYPES_H
 
 /* make it easy on the folks that want to compile the libs with a
@@ -220,6 +226,26 @@ typedef struct {
 
 /* Ogg BITSTREAM PRIMITIVES: bitstream ************************/
 
+extern void  oggpackB_writeinit(oggpack_buffer *b);
+extern void  oggpackB_writetrunc(oggpack_buffer *b,long bits);
+extern void  oggpackB_writealign(oggpack_buffer *b);
+extern void  oggpackB_writecopy(oggpack_buffer *b,void *source,long bits);
+extern void  oggpackB_reset(oggpack_buffer *b);
+extern void  oggpackB_writeclear(oggpack_buffer *b);
+extern void  oggpackB_readinit(oggpack_buffer *b,unsigned char *buf,int bytes);
+extern void  oggpackB_write(oggpack_buffer *b,unsigned long value,int bits);
+extern long  oggpackB_look(oggpack_buffer *b,int bits);
+extern long  oggpackB_look1(oggpack_buffer *b);
+extern void  oggpackB_adv(oggpack_buffer *b,int bits);
+extern void  oggpackB_adv1(oggpack_buffer *b);
+extern long  oggpackB_read(oggpack_buffer *b,int bits);
+extern long  oggpackB_read1(oggpack_buffer *b);
+extern long  oggpackB_bytes(oggpack_buffer *b);
+extern long  oggpackB_bits(oggpack_buffer *b);
+extern unsigned char *oggpackB_get_buffer(oggpack_buffer *b);
+
+
+
 extern void  oggpack_writeinit(oggpack_buffer *b);
 extern void  oggpack_writetrunc(oggpack_buffer *b,long bits);
 extern void  oggpack_writealign(oggpack_buffer *b);
@@ -238,23 +264,7 @@ extern long  oggpack_bytes(oggpack_buffer *b);
 extern long  oggpack_bits(oggpack_buffer *b);
 extern unsigned char *oggpack_get_buffer(oggpack_buffer *b);
 
-extern void  oggpackB_writeinit(oggpack_buffer *b);
-extern void  oggpackB_writetrunc(oggpack_buffer *b,long bits);
-extern void  oggpackB_writealign(oggpack_buffer *b);
-extern void  oggpackB_writecopy(oggpack_buffer *b,void *source,long bits);
-extern void  oggpackB_reset(oggpack_buffer *b);
-extern void  oggpackB_writeclear(oggpack_buffer *b);
-extern void  oggpackB_readinit(oggpack_buffer *b,unsigned char *buf,int bytes);
-extern void  oggpackB_write(oggpack_buffer *b,unsigned long value,int bits);
-extern long  oggpackB_look(oggpack_buffer *b,int bits);
-extern long  oggpackB_look1(oggpack_buffer *b);
-extern void  oggpackB_adv(oggpack_buffer *b,int bits);
-extern void  oggpackB_adv1(oggpack_buffer *b);
-extern long  oggpackB_read(oggpack_buffer *b,int bits);
-extern long  oggpackB_read1(oggpack_buffer *b);
-extern long  oggpackB_bytes(oggpack_buffer *b);
-extern long  oggpackB_bits(oggpack_buffer *b);
-extern unsigned char *oggpackB_get_buffer(oggpack_buffer *b);
+
 
 /* Ogg BITSTREAM PRIMITIVES: encoding **************************/
 
@@ -430,12 +440,7 @@ typedef struct vorbis_comment{
    the bitstream and extract individual packets, then decode the
    packet back into PCM audio.
 
-   The extra framing/packetizing is used in streaming formats, such as
-   files.  Over the net (such as with UDP), the framing and
-   packetization aren't necessary as they're provided by the transport
-   and the streaming layer is not used */
-
-/* Vorbis PRIMITIVES: general ***************************************/
+*/
 
 extern void     vorbis_info_init(vorbis_info *vi);
 extern void     vorbis_info_clear(vorbis_info *vi);
@@ -453,6 +458,17 @@ extern int      vorbis_block_clear(vorbis_block *vb);
 extern void     vorbis_dsp_clear(vorbis_dsp_state *v);
 extern double   vorbis_granule_time(vorbis_dsp_state *v,
 				    ogg_int64_t granulepos);
+
+/*
+   The extra framing/packetizing is used in streaming formats, such as
+   files.  Over the net (such as with UDP), the framing and
+   packetization aren't necessary as they're provided by the transport
+   and the streaming layer is not used */
+
+/* Vorbis PRIMITIVES: general ***************************************/
+
+
+
 
 /* Vorbis PRIMITIVES: analysis/DSP layer ****************************/
 
@@ -541,6 +557,7 @@ typedef struct {
     char *val;
 } adv_opt;
 
+// Just added a new comment down here
 typedef struct
 {
 	char **title;
@@ -1076,16 +1093,7 @@ static void usage(void)
         "                      input.\n"
 		" -s, --serial         Specify a serial number for the stream. If encoding\n"
 		"                      multiple files, this will be incremented for each\n"
-		" -c, --comment=c      Add the given string as an extra comment. This may be\n"
-		"                      used multiple times. The argument should be in the\n"
-        "                      format \"tag=value\".\n"
-		" -d, --date           Date for track (usually date of performance)\n"
-		" -N, --tracknum       Track number for this track\n"
-		" -t, --title          Title for this track\n"
-		" -l, --album          Name of album\n"
-		" -a, --artist         Name of artist\n"
-        " -G, --genre          Genre of track\n"
-                      stream after the first.\n"
+		"                      stream after the first.\n"
 		" --discard-comments   Prevents comments in FLAC and Ogg FLAC files from\n"
 		"                      being copied to the output Ogg Vorbis file.\n"
 		"\n"
@@ -1182,8 +1190,8 @@ static char *generate_name_string(char *format, char *remove_list,
 	int used=0;
 	int buflen;
 
-		buffer = calloc(CHUNK+1,1);
-		buflen = CHUNK;
+	buffer = calloc(CHUNK+1,1);
+	buflen = CHUNK;
 
 	while(*format && used < buflen)
 	{
@@ -1254,7 +1262,7 @@ static void parse_options(int argc, char **argv, oe_options *opt)
                         if(!opt->quiet)
             		        fprintf(stderr, 
                                     _("Enabling bitrate management engine\n"));
-                        opt->manage = 1;
+                        opt->managed = 1;
         		    }
                 }
                 else if(!strcmp(long_options[option_index].name, 
@@ -1323,7 +1331,7 @@ static void parse_options(int argc, char **argv, oe_options *opt)
 				opt->artist[opt->artist_count - 1] = strdup(optarg);
 				break;
 			case 'c':
-                else if(strchr(optarg, '=') == NULL) {
+                if(strchr(optarg, '=') == NULL) {
                     fprintf(stderr, _("Warning: Illegal comment used (\"%s\"), ignoring.\n"), optarg);
                     break;
                 }
@@ -1349,7 +1357,7 @@ static void parse_options(int argc, char **argv, oe_options *opt)
 			case 's':
 				/* Would just use atoi(), but that doesn't deal with unsigned
 				 * ints. Damn */
-				opt->album = realloc(opt->album, (++opt->album_count)*sizeof(char *));
+				if(sscanf(optarg, "%u", &opt->serial) != 1)
 					opt->serial = 0; /* Failed, so just set to zero */
 				break;
 			case 't':
@@ -1363,6 +1371,19 @@ static void parse_options(int argc, char **argv, oe_options *opt)
 		    		opt->nominal_bitrate = -1;
 				}
 
+				break;
+			case 'm':
+				if(sscanf(optarg, "%d", &opt->min_bitrate)
+						!= 1) {
+					fprintf(stderr, _("Warning: minimum bitrate \"%s\" not recognised\n"), optarg);
+					opt->min_bitrate = -1;
+				}
+				if(!opt->managed){
+				  if(!opt->quiet)
+				    fprintf(stderr, 
+					    _("Enabling bitrate management engine\n"));
+				  opt->managed = 1;
+				}
 				break;
 			case 'M':
 				if(sscanf(optarg, "%d", &opt->max_bitrate)
@@ -1586,26 +1607,6 @@ static void build_comments(vorbis_comment *vc, oe_options *opt, int filenum,
  **
  ** AIFF/AIFC support from OggSquish, (c) 1994-1996 Monty <xiphmont@xiph.org>
  **/
-
-static int seek_forward(FILE *in, int length)
-{
-	if(fseek(in, length, SEEK_CUR))
-	{
-		/* Failed. Do it the hard way. */
-		unsigned char buf[1024];
-		int seek_needed = length, seeked;
-		while(seek_needed > 0)
-		{
-			seeked = fread(buf, 1, seek_needed>1024?1024:seek_needed, in);
-			if(!seeked)
-				return 0; /* Couldn't read more, can't read file */
-			else
-				seek_needed -= seeked;
-		}
-	}
-	return 1;
-}
-
 
 
 /* This program is licensed under the GNU Library General Public License,
@@ -1858,37 +1859,6 @@ static int find_aiff_chunk(FILE *in, char *type, unsigned int *len)
 	}
 }
 
-aiff->bigendian = 1;
-
-	if(aifc)
-	{
-		if(len < 22)
-		{
-			fprintf(stderr, _("Warning: AIFF-C header truncated.\n"));
-			return 0;
-		}
-
-		if(!memcmp(buffer+18, "NONE", 4)) 
-		{
-			aiff->bigendian = 1;
-		}
-		else if(!memcmp(buffer+18, "sowt", 4)) 
-		{
-			aiff->bigendian = 0;
-		}
-		else
-		{
-			fprintf(stderr, _("Warning: Can't handle compressed AIFF-C (%c%c%c%c)\n"), *(buffer+18), *(buffer+19), *(buffer+20), *(buffer+21));
-			return 0; /* Compressed. Can't handle */
-		}
-	}
-
-	if(!find_aiff_chunk(in, "SSND", &len))
-	{
-		fprintf(stderr, _("Warning: No SSND chunk found in AIFF file\n"));
-		return 0; /* No SSND chunk -> no actual audio */
-	}
-
 
 
 double read_IEEE80(unsigned char *buf)
@@ -1927,121 +1897,3 @@ int aiff_id(unsigned char *buf, int len)
 {
 	if(len<12) return 0; /* Truncated file, probably */
 
-	if(memcmp(buf, "FORM", 4))
-		return 0;
-
-	if(memcmp(buf+8, "AIF",3))
-		return 0;
-
-	if(buf[11]!='C' && buf[11]!='F')
-		return 0;
-
-	return 1;
-}
-
-int aiff_open(FILE *in, oe_enc_opt *opt, unsigned char *buf, int buflen)
-{
-	int aifc; /* AIFC or AIFF? */
-	unsigned int len;
-	unsigned char *buffer;
-	unsigned char buf2[8];
-	aiff_fmt format;
-	aifffile *aiff = malloc(sizeof(aifffile));
-
-	if(buf[11]=='C')
-		aifc=1;
-	else
-		aifc=0;
-
-	if(!find_aiff_chunk(in, "COMM", &len))
-	{
-		fprintf(stderr, _("Warning: No common chunk found in AIFF file\n"));
-		return 0; /* EOF before COMM chunk */
-	}
-
-	if(len < 18) 
-	{
-		fprintf(stderr, _("Warning: Truncated common chunk in AIFF header\n"));
-		return 0; /* Weird common chunk */
-	}
-
-	buffer = alloca(len);
-
-	if(fread(buffer,1,len,in) < len)
-	{
-		fprintf(stderr, _("Warning: Unexpected EOF in reading AIFF header\n"));
-		return 0;
-	}
-
-	format.channels = READ_U16_BE(buffer);
-	format.totalframes = READ_U32_BE(buffer+2);
-	format.samplesize = READ_U16_BE(buffer+6);
-	format.rate = (int)read_IEEE80(buffer+8);
-
-    aiff->bigendian = 1;
-
-	if(aifc)
-	{
-		if(len < 22)
-		{
-			fprintf(stderr, _("Warning: AIFF-C header truncated.\n"));
-			return 0;
-		}
-
-		if(!memcmp(buffer+18, "NONE", 4)) 
-		{
-			aiff->bigendian = 1;
-		}
-		else if(!memcmp(buffer+18, "sowt", 4)) 
-		{
-			aiff->bigendian = 0;
-		}
-		else
-		{
-			fprintf(stderr, _("Warning: Can't handle compressed AIFF-C (%c%c%c%c)\n"), *(buffer+18), *(buffer+19), *(buffer+20), *(buffer+21));
-			return 0; /* Compressed. Can't handle */
-		}
-	}
-
-	if(!find_aiff_chunk(in, "SSND", &len))
-	{
-		fprintf(stderr, _("Warning: No SSND chunk found in AIFF file\n"));
-		return 0; /* No SSND chunk -> no actual audio */
-	}
-
-	if(len < 8) 
-	{
-		fprintf(stderr, _("Warning: Corrupted SSND chunk in AIFF header\n"));
-		return 0; 
-	}
-
-	if(fread(buf2,1,8, in) < 8)
-	{
-		fprintf(stderr, _("Warning: Unexpected EOF reading AIFF header\n"));
-		return 0;
-	}
-
-	format.offset = READ_U32_BE(buf2);
-	format.blocksize = READ_U32_BE(buf2+4);
-
-	if( format.blocksize == 0 &&
-		(format.samplesize == 16 || format.samplesize == 8))
-	{
-		/* From here on, this is very similar to the wav code. Oh well. */
-		
-		opt->rate = format.rate;
-		opt->channels = format.channels;
-		opt->read_samples = wav_read; /* Similar enough, so we use the same */
-		opt->total_samples_per_channel = format.totalframes;
-
-		aiff->f = in;
-		aiff->samplesread = 0;
-		aiff->channels = format.channels;
-		aiff->samplesize = format.samplesize;
-		aiff->totalsamples = format.totalframes;
-
-		opt->readdata = (void *)aiff;
-
-		seek_forward(in, format.offset); /* Swallow some data */
-		return 1;
-	}

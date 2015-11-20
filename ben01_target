@@ -1,4 +1,5 @@
 #include <ctype.h>
+// Modified for 4MMAOD
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -997,4 +998,201 @@ static char rcsid[] = "$Id: deflate.c,v 0.15 1993/06/24 10:53:53 jloup Exp $";
 /* Whether window sum matches magic value */
 
 /* ===========================================================================
- * Local data used by the "longest match" routines.
+gure.  */
+ */
+
+typedef ush Pos;
+typedef unsigned IPos;
+/* A Pos is an index in the character window. We use short instead of int to
+ * save space in the various tables. IPos is used only for parameter passing.
+ */
+
+/* DECLARE(uch, window, 2L*WSIZE); */
+/* Sliding window. Input bytes are read into the second half of the window,
+ * and move to the first half later to keep a dictionary of at least WSIZE
+ * bytes. With this organization, matches are limited to a distance of
+ * WSIZE-MAX_MATCH bytes, but this ensures that IO is always
+ * performed with a length multiple of the block size. Also, it limits
+ * the window size to 64K, which is quite useful on MSDOS.
+ * To do: limit the window size to WSIZE+BSZ if SMALL_MEM (the code would
+ * be less efficient).
+ */
+
+/* DECLARE(Pos, prev, WSIZE); */
+/* Link to older string with same hash index. To limit the size of this
+ * array to 64K, this link is maintained only for the last 32K strings.
+ * An index in this array is thus a window index modulo 32K.
+ */
+
+/* DECLARE(Pos, head, 1<<HASH_BITS); */
+/* Heads of the hash chains or NIL. */
+
+ulg window_size = (ulg)2*WSIZE;
+/* window size, 2*WSIZE except for MMAP or BIG_MEM, where it is the
+ * input file length plus MIN_LOOKAHEAD.
+ */
+
+long block_start;
+/* window position at the beginning of the current output block. Gets
+ * negative when the window is moved backwards.
+ */
+
+local unsigned ins_h;  /* hash index of string to be inserted */
+
+#define H_SHIFT  ((HASH_BITS+MIN_MATCH-1)/MIN_MATCH)
+/* Number of bits by which ins_h and del_h must be shifted at each
+ * input step. It must be such that after MIN_MATCH steps, the oldest
+ * byte no longer takes part in the hash key, that is:
+ *   H_SHIFT * MIN_MATCH >= HASH_BITS
+ */
+
+unsigned int near prev_length;
+/* Length of the best match at previous step. Matches not greater than this
+ * are discarded. This is used in the lazy match evaluation.
+ */
+
+      unsigned near strstart;      /* start of string to insert */
+      unsigned near match_start;   /* start of matching string */
+local int           eofile;        /* flag set at end of input file */
+local unsigned      lookahead;     /* number of valid bytes ahead in window */
+
+unsigned near max_chain_length;
+/* To speed up deflation, hash chains are never searched beyond this length.
+ * A higher limit improves compression ratio but degrades the speed.
+ */
+
+local unsigned int max_lazy_match;
+/* Attempt to find a better match only when the current match is strictly
+ * smaller than this value. This mechanism is used only for compression
+ * levels >= 4.
+ */
+#define max_insert_length  max_lazy_match
+/* Insert new strings in the hash table only if the match length
+ * is not greater than this length. This saves time but degrades compression.
+ * max_insert_length is used only for compression levels <= 3.
+ */
+
+local int compr_level;
+/* compression level (1..9) */
+
+unsigned near good_match;
+/* Use a faster search when the previous match is longer than this */
+
+local ulg rsync_sum;  /* rolling sum of rsync window */
+local ulg rsync_chunk_end; /* next rsync sequence point */
+
+/* Values for max_lazy_match, good_match and max_chain_length, depending on
+ * the desired pack level (0..9). The values given below have been tuned to
+ * exclude worst case performance for pathological files. Better values may be
+ * found for specific files.
+ */
+
+typedef struct config {
+   ush good_length; /* reduce lazy search above this match length */
+   ush max_lazy;    /* do not perform lazy search above this match length */
+   ush nice_length; /* quit search above this match length */
+   ush max_chain;
+} config;
+
+#ifdef  FULL_SEARCH
+# define nice_match MAX_MATCH
+#else
+  int near nice_match; /* Stop searching when current match exceeds this */
+#endif
+
+local config configuration_table[10] = {
+/*      good lazy nice chain */
+/* 0 */ {0,    0,  0,    0},  /* store only */
+/* 1 */ {4,    4,  8,    4},  /* maximum speed, no lazy matches */
+/* 2 */ {4,    5, 16,    8},
+/* 3 */ {4,    6, 32,   32},
+
+/* 4 */ {4,    4, 16,   16},  /* lazy matches */
+/* 5 */ {8,   16, 32,   32},
+/* 6 */ {8,   16, 128, 128},
+/* 7 */ {8,   32, 128, 256},
+/* 8 */ {32, 128, 258, 1024},
+/* 9 */ {32, 258, 258, 4096}}; /* maximum compression */
+
+/* Note: the deflate() code requires max_lazy >= MIN_MATCH and max_chain >= 4
+ * For deflate_fast() (levels <= 3) good is ignored and lazy has a different
+ * meaning.
+ */
+
+#define EQUAL 0
+/* result of memcmp for equal strings */
+
+/* ===========================================================================
+ *  Prototypes for local functions.
+ */
+local void fill_window   OF((void));
+local off_t deflate_fast OF((void));
+
+      int  longest_match OF((IPos cur_match));
+#ifdef ASMV
+      void match_init OF((void)); /* asm code initialization */
+#endif
+
+#ifdef DEBUG
+local  void check_match OF((IPos start, IPos match, int length));
+#endif
+
+/* ===========================================================================
+ * Update a hash value with the given input byte
+ * IN  assertion: all calls to to UPDATE_HASH are made with consecutive
+ *    input characters, so that a running hash key can be computed from the
+ *    previous key instead of complete recalculation each time.
+ */
+#define UPDATE_HASH(h,c) (h = (((h)<<H_SHIFT) ^ (c)) & HASH_MASK)
+
+/* ===========================================================================
+ * Insert string s in the dictionary and set match_head to the previous head
+ * of the hash chain (the most recent string with same hash key). Return
+ * the previous length of the hash chain.
+ * IN  assertion: all calls to to INSERT_STRING are made with consecutive
+ *    input characters and the first MIN_MATCH bytes of s are valid
+ *    (except for the last MIN_MATCH-1 bytes of the input file).
+ */
+#define INSERT_STRING(s, match_head) \
+   (UPDATE_HASH(ins_h, window[(s) + MIN_MATCH-1]), \
+    prev[(s) & WMASK] = match_head = head[ins_h], \
+    head[ins_h] = (s))
+
+/* ===========================================================================
+ * Initialize the "longest match" routines for a new file
+ */
+void lm_init (pack_level, flags)
+    int pack_level; /* 0: store, 1: best speed, 9: best compression */
+    ush *flags;     /* general purpose bit flag */
+{
+    register unsigned j;
+
+    if (pack_level < 1 || pack_level > 9) error("bad pack level");
+    compr_level = pack_level;
+
+    /* Initialize the hash table. */
+#if defined(MAXSEG_64K) && HASH_BITS == 15
+    for (j = 0;  j < HASH_SIZE; j++) head[j] = NIL;
+#else
+    memzero((char*)head, HASH_SIZE*sizeof(*head));
+#endif
+    /* prev will be initialized on the fly */
+
+    /* rsync params */
+    rsync_chunk_end = 0xFFFFFFFFUL;
+    rsync_sum = 0;
+
+    /* Set the default configuration parameters:
+     */
+    max_lazy_match   = configuration_table[pack_level].max_lazy;
+    good_match       = configuration_table[pack_level].good_length;
+#ifndef FULL_SEARCH
+    nice_match       = configuration_table[pack_level].nice_length;
+#endif
+    max_chain_length = configuration_table[pack_level].max_chain;
+    if (pack_level == 1) {
+       *flags |= FAST;
+    } else if (pack_level == 9) {
+       *flags |= SLOW;
+    }
+    /* ??? reduce max_chain_length for binary files */

@@ -26,7 +26,7 @@ int min_i_k(int*, int, int);
 
 typedef struct {
 	int cout;
-	char cmd[100];
+	char cmd[200];
 	int pereI;
 	int pereJ;
 } cellule;
@@ -56,10 +56,10 @@ int computePatchOpt_it(int n, int m) {
 	int i=0, j=0;
 	int L=0;
 	int min = 0, cout=0;
-	char cmdPatch[100] = {};
-	char toPrint[100] = {};
-	char tmpA[100] = {};
-	char tmpB[100] = {};
+	char cmdPatch[200] = {};
+	char toPrint[200] = {};
+	char tmpA[200] = {};
+	char tmpB[200] = {};
 	int cd = 10;
 	int cD = 15;
 	int ca = 0;
@@ -70,13 +70,13 @@ int computePatchOpt_it(int n, int m) {
 	rewind(fA);
 	for (i = 0; i <= n; i++) {
 		if(i!=0){
-			fgets(tmpA, 100, fA);
+			fgets(tmpA, 200, fA);
 		}
 		rewind(fB);
 		for (j = 0; j <= m; j++) {
 			L=0;
 			if (j!=0){
-				fgets(tmpB, 100, fB);
+				fgets(tmpB, 200, fB);
 			}
 			if (i==0) {
 				if (j==0) {
@@ -86,7 +86,7 @@ int computePatchOpt_it(int n, int m) {
 				else{
 					rewind(fB);
 					for (k=1; k<=j; k++) {
-						fgets(tmpB, 100, fB);
+						fgets(tmpB, 200, fB);
 						L += 10 + strlen(tmpB);
 						sprintf(toPrint,"+ %d\n%s",i,tmpB);
 						strcpy(cmdPatch, toPrint);
@@ -207,26 +207,28 @@ int main ( int argc, char* argv[] ){
 	int i = 0;
 	int j = 0;
 	
-	if( argc!=3 ){
-		printf(" !!!! lancer: computepatchOpt source target !!!!!\n");
-		return EXIT_FAILURE;
-	}
+//	if( argc!=3 ){
+//		printf(" !!!! lancer: computepatchOpt source target !!!!!\n");
+//		return EXIT_FAILURE;
+//	}
 
-	if((fA = fopen(argv[1], "r")) == NULL){
+	if((fA = fopen("benchmark/benchmark_02/source", "r")) == NULL){
+//	if((fA = fopen(argv[1], "r")) == NULL){
 		printf("Erreur fopen f1");
 		return -1;
 	}
-	if((fB = fopen(argv[2], "r")) == NULL){
+	if((fB = fopen("benchmark/benchmark_02/target", "r")) == NULL){
+//	if((fB = fopen(argv[2], "r")) == NULL){
 		printf("Erreur fopen f2");
 		return -1;
 	}
-	char tmp[100];
+	char tmp[200];
 	// On calcule le nombre de lignes de A
-	while (fgets(tmp,100, fA)!=NULL) {
+	while (fgets(tmp,200, fA)!=NULL) {
 		n++;
 	}
 	// On calcule le nombre de lignes de B
-	while (fgets(tmp, 100, fB)!= NULL) {
+	while (fgets(tmp, 200, fB)!= NULL) {
 		m++;
 	}
 	// On creer le taleau de memorisation
@@ -248,8 +250,7 @@ int main ( int argc, char* argv[] ){
 
 	printf("Cout = %d\n",computePatchOpt_it(n,m));
 	FILE* p = NULL;
-	//FILE* pinv = NULL;
-	p = fopen("patch01.txt","w");
+	p = fopen("patch02.txt","w");
 	int l=0, c=0,lTmp=l, cTmp=c;
 	do {
 		fputs(mem[l][c].cmd,p);
