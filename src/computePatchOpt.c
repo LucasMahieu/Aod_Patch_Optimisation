@@ -23,7 +23,6 @@
 #include <sys/time.h>
 
 int computePatchOpt(int, int);
-int min_i_k(int*, int, int);
 
 typedef struct {
 	int cout;
@@ -35,26 +34,11 @@ typedef struct {
 cellule** mem = NULL;
 FILE* fA;
 FILE* fB;
-struct timeval tempsD, tempsF;
-
-int min_i_k(int* kD,int i, int j){
-	int min = mem[i-1][j].cout;
-	int tmp = 0;
-	int k=2;
-	*kD = 1;
-		while((i-k)>=0){
-		tmp = mem[i-k][j].cout; 
-		if (tmp < min){
-			min = tmp;
-			*kD = k;
-		}
-		k++;
-	}
-	return min;
-}
 
 
-int computePatchOpt_it(int n, int m) {
+int computePatchOpt_it(int n, int m)
+{
+	struct timeval tempsD, tempsF;
 	if( gettimeofday(&tempsD,NULL)){
 		printf("erreur GetTimeOfDay !!! ");
 		return -1;
@@ -71,55 +55,37 @@ int computePatchOpt_it(int n, int m) {
 	ssize_t lAlen=0, lBlen=0;
 	int cd = 10, cD=15, ca=0, cs=0;
 	int pi=0,pj=0;
-	int k=0, kD=0;
+	int k=0, iD=0;
 	int add=0, sub=0, del=0, Del=0;
 	rewind(fB);
-//	rewind(fA);
-//	for(i = 0; i <=n; i++) {
 	for(j = 0; j <=m; j++) {
 		if (j!=0){
 			lBlen = getline(&tmpB, &lB, fB);
 		}
-//		if(i!=0){
-//			lAlen = getline(&tmpA, &lA, fA);
-//		}
-//		rewind(fB);
 		rewind(fA);
-//		for (j = 0; j<=m; j++) {
+		iD=0;
 		for(i = 0; i <=n; i++) {
 			if(i!=0){
 				lAlen = getline(&tmpA, &lA, fA);
 			}
 			L=0;
-//			if (j!=0){
-//				lBlen = getline(&tmpB, &lB, fB);
-//			}
 			if (i==0) {
 				if (j==0) {
 					mem[0][0].cout = 0;
 				}
-			//i=0 et j!=0
+			//i=0 et j!=0 f(0,j) = sum(10+LkB) avec k=1..j
 				else{
 					rewind(fB);
 					for (k=1; k<=j; k++) {
-						//if(tmpB){
-						//	free(tmpB);
-						//}
 						lBlen = getline(&tmpB, &lB, fB);
 						L += 10 + lBlen;
-					//	if(toPrint){
-					//		free(toPrint);
-					//	}
 						asprintf(&toPrint,"+ %d\n%s",i,tmpB);
-					//	strcpy(cmdPatch, toPrint);
 						pi = i;
 						pj = j-1;
 					}
 					mem[0][j].cout = L; 
 					mem[0][j].cmd = (char*)calloc(strlen(toPrint)+1,sizeof(char));
 					strcpy(mem[0][j].cmd, toPrint);
-					//asprintf(&mem[0][j].cmd, toPrint); 
-					//free(toPrint);
 					mem[0][j].pereI = pi; 
 					mem[0][j].pereJ = pj; 
 				}
@@ -130,29 +96,19 @@ int computePatchOpt_it(int n, int m) {
 				if (j==0) {
 					if (i==1) {
 						mem[i][0].cout = 10;
-					//	if(toPrint){
-					//		free(toPrint);
-					//	}
 						asprintf(&toPrint,"d %d\n",i);
-					//	strcpy(cmdPatch, toPrint);
 						pi = i-1;
 						pj = j;
 					}
 				// j=0 et i!=1
 					else{
 						mem[i][0].cout = 15;
-					//	if(toPrint){
-					//		free(toPrint);
-					//	}
 						asprintf(&toPrint,"D %d %d\n",1,i);
-					//	strcpy(cmdPatch, toPrint);
 						pi = i-i;
 						pj = j;
 					}
 					mem[i][0].cmd = (char*)calloc(strlen(toPrint)+1,sizeof(char));
 					strcpy(mem[i][0].cmd, toPrint);
-					//asprintf(&mem[i][0].cmd, toPrint); 
-					//free(toPrint);
 					mem[i][0].pereI = pi; 
 					mem[i][0].pereJ = pj; 
 				}
@@ -178,65 +134,46 @@ int computePatchOpt_it(int n, int m) {
 					add = mem[i][j-1].cout + ca;
 					sub = mem[i-1][j-1].cout + cs;
 					del = mem[i-1][j].cout + cd;
-					Del = min_i_k( &kD, i, j) + cD;
+					Del = mem[iD][j].cout + cD;
 
 					min = sub;
 					if(cs == 0){
-						//if(toPrint){
-						//	free(toPrint);
-						//}
 						asprintf(&toPrint,"");
-					//	strcpy(cmdPatch, toPrint);
 						pi = i-1;
 						pj = j-1;
 					}
 					else{
-					//	if(toPrint){
-					//		free(toPrint);
-					//	}
 						asprintf(&toPrint,"= %d\n%s",i,tmpB);
-					//	strcpy(cmdPatch, toPrint);
 						pi = i-1;
 						pj = j-1;
 					}
 					if( add<=min ){
 						min = add;
-					//	if(toPrint){
-					//		free(toPrint);
-					//	}
 						asprintf(&toPrint,"+ %d\n%s",i,tmpB);
-					//	strcpy(cmdPatch, toPrint);
 						pi = i;
 						pj = j-1;
 
 					}
 					if( del<min ){
-					//	if(toPrint){
-					//		free(toPrint);
-					//	}
 						min = del;
 						asprintf(&toPrint,"d %d\n",i);
-					//	strcpy(cmdPatch, toPrint);
 						pi = i-1;
 						pj = j;
 					}
 					if( Del<min ){
 						min = Del;
-					//	if(toPrint){
-					//		free(toPrint);
-					//	}
-						asprintf(&toPrint,"D %d %d\n",i-kD+1,kD);
-					//	strcpy(cmdPatch, toPrint);
-						pi = i-kD;
+						asprintf(&toPrint,"D %d %d\n",iD+1,i-iD);
+						pi = iD;
 						pj = j;
 					}
 					mem[i][j].cout = min;
 					mem[i][j].cmd = (char*)calloc(strlen(toPrint)+1,sizeof(char));
 					strcpy(mem[i][j].cmd, toPrint);
-					//asprintf(&mem[i][j].cmd, toPrint);
-					//free(toPrint);
 					mem[i][j].pereI = pi;
 					mem[i][j].pereJ = pj;
+					if(min<=mem[iD][j].cout){
+						iD=i;
+					}
 				}
 			}
 		}
@@ -270,38 +207,50 @@ int computePatchOpt_it(int n, int m) {
 		suseconds_t timeB = tempsD.tv_sec*1000000 + tempsD.tv_usec;
 		int sec =(int)((timeE - timeB)/1000000);
 		int usec =(int)((timeE - timeB)-1000000*sec);
-
+		int min = 0;
+		if (sec>=60){
+			min = sec/60;
+			sec = sec%60;
+		}
 		printf("#############################################################\n");
 		printf("-------------- Patch Optimal généré en ----------------------\n");
-		printf("-------------- %dsec %dus --------------------------------\n",sec,usec);
-		printf("#############################################################\n");
+		printf("-------------- %02dmin %02dsec %06dus -------------------------\n",min,sec,usec);
 	}
-	
 	return cout;
 }
 
-int main ( int argc, char* argv[] ){
-
-	int n = 0;
-	int m = 0;
-	int i = 0;
-	int j = 0;
-	
+int main ( int argc, char* argv[] )
+{
 	if( argc!=4 ){
 		printf(" !!!! lancer: computepatchOpt source target patch_à_creer !!!!!\n");
 		return EXIT_FAILURE;
 	}
+	printf("#############################################################\n");
+	printf("#################  GENERATEUR DE PATCH OPTIMAL ##############\n");
+	printf("#############################################################\n");
+	printf("-------------- Entrée du Patch : %s\n",argv[1]);
+	printf("-------------- Sortie du Patch : %s\n",argv[2]);
+	int n = 0;
+	int m = 0;
+	int i = 0;
+	int j = 0;
 
-//	if((fA = fopen("benchmark/benchmark_02/source", "r")) == NULL){
+	struct timeval tempsDmain;
+	struct timeval tempsFmain;
+	if( gettimeofday(&tempsDmain,NULL)){
+		printf("erreur GetTimeOfDay !!! ");
+		return -1;
+	}
+
 	if((fA = fopen(argv[1], "r")) == NULL){
 		printf("Erreur fopen f1");
 		return -1;
 	}
-//	if((fB = fopen("benchmark/benchmark_02/target", "r")) == NULL){
 	if((fB = fopen(argv[2], "r")) == NULL){
 		printf("Erreur fopen f2");
 		return -1;
 	}
+
 	char tmp[500];
 	// On calcule le nombre de lignes de A
 	while (fgets(tmp,500, fA)!=NULL) {
@@ -329,22 +278,32 @@ int main ( int argc, char* argv[] ){
 		}
 	}
 
-	printf("-------------- Son coût est de: %d -----------------------\n",computePatchOpt_it(n,m));
-	printf("-------------- Patch écrit dans '%s'--------------\n",argv[3]);
+	printf("-------------- Coût du Patch :  %d \n",computePatchOpt_it(n,m));
 	printf("#############################################################\n");
+	printf("-------------- Patch en écriture veuillez patienter\n");
 
 	FILE* p = NULL;
 	p = fopen(argv[3],"w");
 	int l=0, c=0,lTmp=l, cTmp=c;
+	int compteur = 0;
 	do {
 		if (!(l==0 && c==0)){
 			fputs(mem[l][c].cmd,p);
+		}
+		if(compteur>=m/100){
+			compteur = 0;
+			printf("#");
+		}
+		else{
+		compteur++;
 		}
 		l = mem[lTmp][cTmp].pereI;
 		c = mem[lTmp][cTmp].pereJ;
 		cTmp = c;
 		lTmp = l;
 	}while(l>-1 && c>-1);
+	printf(" 100%%\n");
+	printf("-------------- Patch écrit dans '%s'\n",argv[3]);
 
 	for (i = 1;  i<n+1; i++) {
 		for (j = 1;  j<m+1; j++) {
@@ -356,5 +315,23 @@ int main ( int argc, char* argv[] ){
 	fclose(p);
 	fclose(fA);
 	fclose(fB);
+	if( gettimeofday(&tempsFmain, NULL) ){
+		printf(" erreur getTimeOfDay fin !! ");
+	}
+	else{
+		suseconds_t timeFmain = tempsFmain.tv_sec*1000000 + tempsFmain.tv_usec;
+		suseconds_t timeDmain = tempsDmain.tv_sec*1000000 + tempsDmain.tv_usec;
+		int sec =(int)((timeFmain - timeDmain)/1000000);
+		int usec =(int)((timeFmain - timeDmain)-1000000*sec);
+		int min = 0;
+		if (sec>=60){
+			min = sec/60;
+			sec = sec%60;
+		}
+		printf("#############################################################\n");
+		printf("--------------- Temps total de l'opération ------------------\n");
+		printf("--------------- %02dmin %02dsec %06dus ------------------------\n",min,sec,usec);
+		printf("#############################################################\n");
+	}
 	return EXIT_SUCCESS;
 }/* ----------  end of function main  ---------- */
