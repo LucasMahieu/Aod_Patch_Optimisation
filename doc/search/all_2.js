@@ -1,5 +1,8 @@
 var searchData=
 [
-  ['fa',['fA',['../computePatchOpt_8c.html#a2623f8590375695d4e0c4c260aa213d1',1,'computePatchOpt.c']]],
-  ['fb',['fB',['../computePatchOpt_8c.html#a99446283b9f57b6402cfb1d194d91366',1,'computePatchOpt.c']]]
+  ['cellule',['cellule',['../structcellule.html',1,'']]],
+  ['cmd',['cmd',['../structcellule.html#a31202edc3ba2ec193050d3e07fbac72e',1,'cellule']]],
+  ['computepatchopt_2ec',['computePatchOpt.c',['../computePatchOpt_8c.html',1,'']]],
+  ['computepatchopt_5fit',['computePatchOpt_it',['../computePatchOpt_8c.html#a9d1016493a29f9d134f80937658f53e2',1,'computePatchOpt.c']]],
+  ['cout',['cout',['../structcellule.html#ab90e3e293c5fc69698ff9a44f1633878',1,'cellule']]]
 ];

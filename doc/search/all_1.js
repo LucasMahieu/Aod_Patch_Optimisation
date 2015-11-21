@@ -1,8 +1,5 @@
 var searchData=
 [
-  ['cellule',['cellule',['../structcellule.html',1,'']]],
-  ['cmd',['cmd',['../structcellule.html#a31202edc3ba2ec193050d3e07fbac72e',1,'cellule']]],
-  ['computepatchopt_2ec',['computePatchOpt.c',['../computePatchOpt_8c.html',1,'']]],
-  ['computepatchopt_5fit',['computePatchOpt_it',['../computePatchOpt_8c.html#a9d1016493a29f9d134f80937658f53e2',1,'computePatchOpt.c']]],
-  ['cout',['cout',['../structcellule.html#ab90e3e293c5fc69698ff9a44f1633878',1,'cellule']]]
+  ['applypatch',['applyPatch',['../applyPatch_8c.html#aeabbd4d9ea71f0598f177ac7b8b2eebd',1,'applyPatch.c']]],
+  ['applypatch_2ec',['applyPatch.c',['../applyPatch_8c.html',1,'']]]
 ];

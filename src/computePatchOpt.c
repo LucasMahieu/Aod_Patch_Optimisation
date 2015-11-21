@@ -17,6 +17,7 @@
  *
  * ======================================================================
  */
+#define _GNU_SOURCE
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -71,7 +72,7 @@ int computePatchOpt_it(int n, int m)
 	//!Initialisation des variables
 	//! -------------------------------
 	int i=0, j=0;
-	int L=0;
+	int L=0, ecrit=0;
 	int min = 0, cout=0;
 	//char* cmdPatch = NULL;
 	char* toPrint = (char*)calloc(1,sizeof(*toPrint));
@@ -108,7 +109,7 @@ int computePatchOpt_it(int n, int m)
 					for (k=1; k<=j; k++) {
 						lBlen = getline(&tmpB, &lB, fB);
 						L += 10 + lBlen;
-						asprintf(&toPrint,"+ %d\n%s",i,tmpB);
+						ecrit = asprintf(&toPrint,"+ %d\n%s",i,tmpB);
 						pi = i;
 						pj = j-1;
 					}
@@ -127,7 +128,7 @@ int computePatchOpt_it(int n, int m)
 				// Si i=1, deletion coute 10
 					if (i==1) {
 						mem[i][0].cout = 10;
-						asprintf(&toPrint,"d %d\n",i);
+						ecrit = asprintf(&toPrint,"d %d\n",i);
 						pi = i-1;
 						pj = j;
 					}
@@ -135,7 +136,7 @@ int computePatchOpt_it(int n, int m)
 					else{
 				// Si i>1, deletion coute 15
 						mem[i][0].cout = 15;
-						asprintf(&toPrint,"D %d %d\n",1,i);
+						ecrit = asprintf(&toPrint,"D %d %d\n",1,i);
 						pi = i-i;
 						pj = j;
 					}
@@ -171,31 +172,31 @@ int computePatchOpt_it(int n, int m)
 				// On selectionne l'opération de cout min
 					min = sub;
 					if(cs == 0){
-						asprintf(&toPrint,"");
+					ecrit = asprintf(&toPrint,"");
 						pi = i-1;
 						pj = j-1;
 					}
 					else{
-						asprintf(&toPrint,"= %d\n%s",i,tmpB);
+						ecrit = asprintf(&toPrint,"= %d\n%s",i,tmpB);
 						pi = i-1;
 						pj = j-1;
 					}
 					if( add<=min ){
 						min = add;
-						asprintf(&toPrint,"+ %d\n%s",i,tmpB);
+						ecrit = asprintf(&toPrint,"+ %d\n%s",i,tmpB);
 						pi = i;
 						pj = j-1;
 
 					}
 					if( del<min ){
 						min = del;
-						asprintf(&toPrint,"d %d\n",i);
+						ecrit = asprintf(&toPrint,"d %d\n",i);
 						pi = i-1;
 						pj = j;
 					}
 					if( Del<min ){
 						min = Del;
-						asprintf(&toPrint,"D %d %d\n",iD+1,i-iD);
+						ecrit = asprintf(&toPrint,"D %d %d\n",iD+1,i-iD);
 						pi = iD;
 						pj = j;
 					}

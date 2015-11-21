@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['main',['main',['../applyPatch_8c.html#a0ddf1224851353fc92bfbff6f499fa97',1,'main(int argc, char *argv[]):&#160;applyPatch.c'],['../computePatchOpt_8c.html#a0ddf1224851353fc92bfbff6f499fa97',1,'main(int argc, char *argv[]):&#160;computePatchOpt.c']]],
-  ['mem',['mem',['../computePatchOpt_8c.html#a257bdad70c5eefd2a50007c55e38127f',1,'computePatchOpt.c']]]
+  ['fa',['fA',['../computePatchOpt_8c.html#a2623f8590375695d4e0c4c260aa213d1',1,'computePatchOpt.c']]],
+  ['fb',['fB',['../computePatchOpt_8c.html#a99446283b9f57b6402cfb1d194d91366',1,'computePatchOpt.c']]]
 ];
