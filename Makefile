@@ -10,32 +10,31 @@ DOCDIR=$(REFDIR)/doc
 REPORTDIR=$(REFDIR)/rapport
 
 LATEXSOURCE=$(wildcard $(REPORTDIR)/*.tex)
-#CSOURCE=$(wildcard $(SRCDIR)/applyPatch.c)
 CSOURCE=$(wildcard $(SRCDIR)/applyPatch.c)
 CSOURCEP=$(wildcard $(SRCDIR)/computePatchOpt.c)
-#PDF=$(LATEXSOURCE:.tex=.pdf)
+PDF=$(LATEXSOURCE:.tex=.pdf)
 
 
-#all: binary report doc 
-all: binary compute
+all: binary compute report doc 
+#all: binary compute
 
 $(BINDIR)/applyPatch: $(CSOURCE)
 	$(CC) $(CFLAGS)  $^ -o $@
 $(BINDIR)/computePatchOpt: $(CSOURCEP)
 	$(CC) $(CFLAGS)  $^ -o $@
 
-#%.pdf: $(LATEXSOURCE)
-#	$(LATEXC) -output-directory $(REPORTDIR) $^ 
+%.pdf: $(LATEXSOURCE)
+	$(LATEXC) -output-directory $(REPORTDIR) $^ 
 
-#$(DOCDIR)/index.html: $(SRCDIR)/Doxyfile $(CSOURCE) 
-#	$(DOCC) $(SRCDIR)/Doxyfile
+$(DOCDIR)/index.html: $(SRCDIR)/Doxyfile $(CSOURCE) 
+	$(DOCC) $(SRCDIR)/Doxyfile
 
 binary: $(BINDIR)/applyPatch 
 compute: $(BINDIR)/computePatchOpt
 
-#report: $(PDF) 
+report: $(PDF) 
 
-#doc: $(DOCDIR)/index.html
+doc: $(DOCDIR)/index.html
 
 clean:
 	rm -rf $(DOCDIR) $(BINDIR)/* $(REPORTDIR)/*.aux $(REPORTDIR)/*.log  $(REPORTDIR)/rapport.pdf 
