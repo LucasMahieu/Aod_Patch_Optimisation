@@ -194,11 +194,6 @@ int computePatchOpt_it(int n, int m)
 		i = prevPi;
 		j = prevPj;
 	}while(futurPi>0 || futurPj>0);
-	//free(tmpA);
-	//free(tmpB);
-	//if (toPrint){
-		//free(toPrint);
-	//}
 	if( gettimeofday(&tempsF, NULL) ){
 		printf(" erreur getTimeOfDay fin !! ");
 	}
