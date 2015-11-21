@@ -26,7 +26,7 @@ int min_i_k(int*, int, int);
 
 typedef struct {
 	int cout;
-	char cmd[200];
+	char* cmd;
 	int pereI;
 	int pereJ;
 } cellule;
@@ -56,27 +56,34 @@ int computePatchOpt_it(int n, int m) {
 	int i=0, j=0;
 	int L=0;
 	int min = 0, cout=0;
-	char cmdPatch[200] = {};
-	char toPrint[200] = {};
-	char tmpA[200] = {};
-	char tmpB[200] = {};
-	int cd = 10;
-	int cD = 15;
-	int ca = 0;
-	int cs = 0;
+	//char* cmdPatch = NULL;
+	char* toPrint = (char*)calloc(1,sizeof(*toPrint));
+	char* tmpA = NULL;
+	size_t lA = 0;
+	char* tmpB = NULL;
+	size_t lB = 0;
+	ssize_t lAlen=0, lBlen=0;
+	int cd = 10, cD=15, ca=0, cs=0;
 	int pi=0,pj=0;
 	int k=0, kD=0;
 	int add=0, sub=0, del=0, Del=0;
 	rewind(fA);
-	for (i = 0; i <= n; i++) {
+//	for(i = 0; i < n; i++) {
+	do{
 		if(i!=0){
-			fgets(tmpA, 200, fA);
+		//	if(tmpA){
+		//		free(tmpA);
+		//	}
+		//	lAlen = getline(&tmpA, &lA, fA);
 		}
 		rewind(fB);
-		for (j = 0; j <= m; j++) {
+		for (j = 0; j<=m; j++) {
 			L=0;
 			if (j!=0){
-				fgets(tmpB, 200, fB);
+				//if(tmpB){
+				//	free(tmpB);
+				//}
+				lBlen = getline(&tmpB, &lB, fB);
 			}
 			if (i==0) {
 				if (j==0) {
@@ -86,15 +93,24 @@ int computePatchOpt_it(int n, int m) {
 				else{
 					rewind(fB);
 					for (k=1; k<=j; k++) {
-						fgets(tmpB, 200, fB);
-						L += 10 + strlen(tmpB);
-						sprintf(toPrint,"+ %d\n%s",i,tmpB);
-						strcpy(cmdPatch, toPrint);
+						//if(tmpB){
+						//	free(tmpB);
+						//}
+						lBlen = getline(&tmpB, &lB, fB);
+						L += 10 + lBlen;
+					//	if(toPrint){
+					//		free(toPrint);
+					//	}
+						asprintf(&toPrint,"+ %d\n%s",i,tmpB);
+					//	strcpy(cmdPatch, toPrint);
 						pi = i;
 						pj = j-1;
 					}
 					mem[0][j].cout = L; 
-					strcpy(mem[0][j].cmd, cmdPatch); 
+					mem[0][j].cmd = (char*)calloc(strlen(toPrint)+1,sizeof(char));
+					strcpy(mem[0][j].cmd, toPrint);
+					//asprintf(&mem[0][j].cmd, toPrint); 
+					//free(toPrint);
 					mem[0][j].pereI = pi; 
 					mem[0][j].pereJ = pj; 
 				}
@@ -105,28 +121,39 @@ int computePatchOpt_it(int n, int m) {
 				if (j==0) {
 					if (i==1) {
 						mem[i][0].cout = 10;
-						sprintf(toPrint,"d %d\n",i);
-						strcpy(cmdPatch, toPrint);
+					//	if(toPrint){
+					//		free(toPrint);
+					//	}
+						asprintf(&toPrint,"d %d\n",i);
+					//	strcpy(cmdPatch, toPrint);
 						pi = i-1;
 						pj = j;
 					}
 				// j=0 et i!=1
 					else{
 						mem[i][0].cout = 15;
-						sprintf(toPrint,"D %d %d\n",i,i);
-						strcpy(cmdPatch, toPrint);
+					//	if(toPrint){
+					//		free(toPrint);
+					//	}
+						asprintf(&toPrint,"D %d %d\n",1,i);
+					//	strcpy(cmdPatch, toPrint);
 						pi = i-i;
 						pj = j;
 					}
-					strcpy(mem[i][0].cmd, cmdPatch); 
+					mem[i][0].cmd = (char*)calloc(strlen(toPrint)+1,sizeof(char));
+					strcpy(mem[i][0].cmd, toPrint);
+					//asprintf(&mem[i][0].cmd, toPrint); 
+					//free(toPrint);
 					mem[i][0].pereI = pi; 
 					mem[i][0].pereJ = pj; 
 				}
 			// i!=0 et j!=0
 				else {
-					L = strlen(tmpB);
-					if (strcmp(tmpA,tmpB) == 0) {
+					L = lBlen;
+					if (lBlen == lAlen){
+						if(strcmp(tmpA,tmpB) == 0){
 						cs = 0;
+						}
 					}
 					else {
 						cs = 10 + L;
@@ -140,47 +167,66 @@ int computePatchOpt_it(int n, int m) {
 
 					min = sub;
 					if(cs == 0){
-						sprintf(toPrint,"");
-						strcpy(cmdPatch, toPrint);
+						//if(toPrint){
+						//	free(toPrint);
+						//}
+						asprintf(&toPrint,"");
+					//	strcpy(cmdPatch, toPrint);
 						pi = i-1;
 						pj = j-1;
 					}
 					else{
-						sprintf(toPrint,"= %d\n%s",i,tmpB);
-						strcpy(cmdPatch, toPrint);
+					//	if(toPrint){
+					//		free(toPrint);
+					//	}
+						asprintf(&toPrint,"= %d\n%s",i,tmpB);
+					//	strcpy(cmdPatch, toPrint);
 						pi = i-1;
 						pj = j-1;
 					}
 					if( add<=min ){
 						min = add;
-						sprintf(toPrint,"+ %d\n%s",i,tmpB);
-						strcpy(cmdPatch, toPrint);
+					//	if(toPrint){
+					//		free(toPrint);
+					//	}
+						asprintf(&toPrint,"+ %d\n%s",i,tmpB);
+					//	strcpy(cmdPatch, toPrint);
 						pi = i;
 						pj = j-1;
 
 					}
 					if( del<min ){
+					//	if(toPrint){
+					//		free(toPrint);
+					//	}
 						min = del;
-						sprintf(toPrint,"d %d\n",i);
-						strcpy(cmdPatch, toPrint);
+						asprintf(&toPrint,"d %d\n",i);
+					//	strcpy(cmdPatch, toPrint);
 						pi = i-1;
 						pj = j;
 					}
 					if( Del<min ){
 						min = Del;
-						sprintf(toPrint,"D %d %d\n",i-kD+1,kD);
-						strcpy(cmdPatch, toPrint);
+					//	if(toPrint){
+					//		free(toPrint);
+					//	}
+						asprintf(&toPrint,"D %d %d\n",i-kD+1,kD);
+					//	strcpy(cmdPatch, toPrint);
 						pi = i-kD;
 						pj = j;
 					}
 					mem[i][j].cout = min;
-					strcpy(mem[i][j].cmd, cmdPatch);
+					mem[i][j].cmd = (char*)calloc(strlen(toPrint)+1,sizeof(char));
+					strcpy(mem[i][j].cmd, toPrint);
+					//asprintf(&mem[i][j].cmd, toPrint);
+					//free(toPrint);
 					mem[i][j].pereI = pi;
 					mem[i][j].pereJ = pj;
 				}
 			}
 		}
-	}
+		i++;
+	}while((lAlen = getline(&tmpA, &lA,fA))!=-1);
 	i = i-1;
 	j = j-1;
 	cout = mem[i][j].cout;
@@ -197,6 +243,11 @@ int computePatchOpt_it(int n, int m) {
 		i = prevPi;
 		j = prevPj;
 	}while(futurPi>0 || futurPj>0);
+	//free(tmpA);
+	//free(tmpB);
+	//if (toPrint){
+		//free(toPrint);
+	//}
 	return cout;
 }
 
@@ -207,28 +258,28 @@ int main ( int argc, char* argv[] ){
 	int i = 0;
 	int j = 0;
 	
-//	if( argc!=3 ){
-//		printf(" !!!! lancer: computepatchOpt source target !!!!!\n");
-//		return EXIT_FAILURE;
-//	}
+	if( argc!=4 ){
+		printf(" !!!! lancer: computepatchOpt source target patch_à_creer !!!!!\n");
+		return EXIT_FAILURE;
+	}
 
-	if((fA = fopen("benchmark/benchmark_02/source", "r")) == NULL){
-//	if((fA = fopen(argv[1], "r")) == NULL){
+//	if((fA = fopen("benchmark/benchmark_02/source", "r")) == NULL){
+	if((fA = fopen(argv[1], "r")) == NULL){
 		printf("Erreur fopen f1");
 		return -1;
 	}
-	if((fB = fopen("benchmark/benchmark_02/target", "r")) == NULL){
-//	if((fB = fopen(argv[2], "r")) == NULL){
+//	if((fB = fopen("benchmark/benchmark_02/target", "r")) == NULL){
+	if((fB = fopen(argv[2], "r")) == NULL){
 		printf("Erreur fopen f2");
 		return -1;
 	}
-	char tmp[200];
+	char tmp[500];
 	// On calcule le nombre de lignes de A
-	while (fgets(tmp,200, fA)!=NULL) {
+	while (fgets(tmp,500, fA)!=NULL) {
 		n++;
 	}
 	// On calcule le nombre de lignes de B
-	while (fgets(tmp, 200, fB)!= NULL) {
+	while (fgets(tmp, 500, fB)!= NULL) {
 		m++;
 	}
 	// On creer le taleau de memorisation
@@ -243,6 +294,7 @@ int main ( int argc, char* argv[] ){
 		}
 		for (j = 0;  j< m+1; j++) {
 			mem[i][j].cout = 0;
+			mem[i][j].cmd = (char*)calloc(1,sizeof(char));
 			mem[i][j].pereI = 0;
 			mem[i][j].pereJ = 0;
 		}
@@ -250,18 +302,23 @@ int main ( int argc, char* argv[] ){
 
 	printf("Cout = %d\n",computePatchOpt_it(n,m));
 	FILE* p = NULL;
-	p = fopen("patch02.txt","w");
+	p = fopen(argv[3],"w");
 	int l=0, c=0,lTmp=l, cTmp=c;
 	do {
-		fputs(mem[l][c].cmd,p);
+		if (!(l==0 && c==0)){
+			fputs(mem[l][c].cmd,p);
+		}
 		l = mem[lTmp][cTmp].pereI;
 		c = mem[lTmp][cTmp].pereJ;
 		cTmp = c;
 		lTmp = l;
 	}while(l>-1 && c>-1);
 
-	for (j = 0;  j<n+1; j++) {
-		free(mem[j]);
+	for (i = 1;  i<n+1; i++) {
+		for (j = 1;  j<m+1; j++) {
+			free(mem[i][j].cmd);
+		}
+		free(mem[i]);
 	}
 	free(mem);
 	fclose(p);
