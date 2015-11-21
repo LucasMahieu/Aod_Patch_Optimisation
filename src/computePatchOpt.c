@@ -19,7 +19,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h> 
+#include <limits.h>
+#include <sys/time.h>
 
 int computePatchOpt(int, int);
 int min_i_k(int*, int, int);
@@ -34,6 +35,7 @@ typedef struct {
 cellule** mem = NULL;
 FILE* fA;
 FILE* fB;
+struct timeval tempsD, tempsF;
 
 int min_i_k(int* kD,int i, int j){
 	int min = mem[i-1][j].cout;
@@ -53,6 +55,10 @@ int min_i_k(int* kD,int i, int j){
 
 
 int computePatchOpt_it(int n, int m) {
+	if( gettimeofday(&tempsD,NULL)){
+		printf("erreur GetTimeOfDay !!! ");
+		return -1;
+	}
 	int i=0, j=0;
 	int L=0;
 	int min = 0, cout=0;
@@ -67,24 +73,27 @@ int computePatchOpt_it(int n, int m) {
 	int pi=0,pj=0;
 	int k=0, kD=0;
 	int add=0, sub=0, del=0, Del=0;
-	rewind(fA);
-//	for(i = 0; i < n; i++) {
-	do{
-		if(i!=0){
-		//	if(tmpA){
-		//		free(tmpA);
-		//	}
-		//	lAlen = getline(&tmpA, &lA, fA);
+	rewind(fB);
+//	rewind(fA);
+//	for(i = 0; i <=n; i++) {
+	for(j = 0; j <=m; j++) {
+		if (j!=0){
+			lBlen = getline(&tmpB, &lB, fB);
 		}
-		rewind(fB);
-		for (j = 0; j<=m; j++) {
-			L=0;
-			if (j!=0){
-				//if(tmpB){
-				//	free(tmpB);
-				//}
-				lBlen = getline(&tmpB, &lB, fB);
+//		if(i!=0){
+//			lAlen = getline(&tmpA, &lA, fA);
+//		}
+//		rewind(fB);
+		rewind(fA);
+//		for (j = 0; j<=m; j++) {
+		for(i = 0; i <=n; i++) {
+			if(i!=0){
+				lAlen = getline(&tmpA, &lA, fA);
 			}
+			L=0;
+//			if (j!=0){
+//				lBlen = getline(&tmpB, &lB, fB);
+//			}
 			if (i==0) {
 				if (j==0) {
 					mem[0][0].cout = 0;
@@ -152,10 +161,16 @@ int computePatchOpt_it(int n, int m) {
 					L = lBlen;
 					if (lBlen == lAlen){
 						if(strcmp(tmpA,tmpB) == 0){
-						cs = 0;
+							//Meme taille et meme chaine 
+							cs = 0;
+						}
+						else{
+							//Meme taille mais différents
+							cs = 10 + L;
 						}
 					}
 					else {
+						//Taille différentes donc différent
 						cs = 10 + L;
 					}
 					ca = 10 + L;
@@ -225,8 +240,7 @@ int computePatchOpt_it(int n, int m) {
 				}
 			}
 		}
-		i++;
-	}while((lAlen = getline(&tmpA, &lA,fA))!=-1);
+	}
 	i = i-1;
 	j = j-1;
 	cout = mem[i][j].cout;
@@ -248,6 +262,21 @@ int computePatchOpt_it(int n, int m) {
 	//if (toPrint){
 		//free(toPrint);
 	//}
+	if( gettimeofday(&tempsF, NULL) ){
+		printf(" erreur getTimeOfDay fin !! ");
+	}
+	else{
+		suseconds_t timeE = tempsF.tv_sec*1000000 + tempsF.tv_usec;
+		suseconds_t timeB = tempsD.tv_sec*1000000 + tempsD.tv_usec;
+		int sec =(int)((timeE - timeB)/1000000);
+		int usec =(int)((timeE - timeB)-1000000*sec);
+
+		printf("#############################################################\n");
+		printf("-------------- Patch Optimal généré en ----------------------\n");
+		printf("-------------- %dsec %dus --------------------------------\n",sec,usec);
+		printf("#############################################################\n");
+	}
+	
 	return cout;
 }
 
@@ -300,7 +329,10 @@ int main ( int argc, char* argv[] ){
 		}
 	}
 
-	printf("Cout = %d\n",computePatchOpt_it(n,m));
+	printf("-------------- Son coût est de: %d -----------------------\n",computePatchOpt_it(n,m));
+	printf("-------------- Patch écrit dans '%s'--------------\n",argv[3]);
+	printf("#############################################################\n");
+
 	FILE* p = NULL;
 	p = fopen(argv[3],"w");
 	int l=0, c=0,lTmp=l, cTmp=c;
