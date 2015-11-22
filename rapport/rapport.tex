@@ -17,8 +17,8 @@
 
 \title{Rapport de TP 4MMAOD : Génération de patch optimal}
 \author{
-NOM Prénom étudiant$_1$ (groupe étudiant$_1$) 
-\\ NOM Prénom étudiant$_2$ (groupe étudiant$_2$) 
+MAHIEU LUCAS étudiant$_1$ (SLE\_PHELMA$_1$) 
+\\ ANOUFA Guillaume étudiant$_2$ (SLE\_PHELMA$_2$) 
 }
 
 \begin{document}
@@ -28,16 +28,32 @@ NOM Prénom étudiant$_1$ (groupe étudiant$_1$)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \paragraph{\em Préambule}
 {\em \begin{itemize} 
-   \item Compléter ce patron de rapport en supprimant toutes les phrases en italique\,: elles ne doivent pas apparaître dans le rapport pdf.
-   \item Il sera attribué {\bf 1 point} pour la qualité globale du rapport\,: présentation, concision et clarté de l'argumentation.
+   \item Compléter ce patr
 \end{itemize}
 }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Principe de notre  programme (1 point)}
-{\em Mettre ici une explication brève du principe de votre programme en  précisant la méthode implantée (récursive, itérative) et les
-choix effectués (notamment pour l'ordonnancement des instructions).
-} 
+{Nous avons choisi d'implementer un algorithme itératif car cela nous paraissait plus efficace qu'un algorithme récursif qui aurait du faire un très grand nombre d'appel et potentiellement remplir entièrement la pile, pour des fichiers volumineux.
+\\ \indent Ainsi nous parcourons une à une toutes les configurations de fichier possible : de $A_0$,$B_0$ à $A_n$,$B_n$, et mémorisons le cout de la configuration à chaque itération.
+\\ \indent Pour pouvoir retrouver, à la fin, par quelle configuration nous sommes arrivé à $A_n$,$B_n$, nous mémorisons aussi les indices de la configuration mère ainsi que la chaine de caractère qu'il faudra afficher dans le patch dans le cas ou celui-ci passe par cette configuration.
+\\ \indent Pour mémoriser ces informations, nous avons utiliser un tableau de taille (n+1)*(m+1) qui contient des structures appelées 'cellule'. Elles sont définies comme ceci:
+{\em \\typedef struct  \{
+\\ \indent int cout,
+\\ \indent char* cmd,
+\\ \indent int pereI,
+\\ \indent int pereJ \} cellule;}
+\\ \indent Pour mieux comprendre nous avons schématiser ce que notre algorithme fait pour l'exemple du sujet. Voir figure~\ref{étiquette} page~\pageref{étiquette} 
+
+\begin{figure}[!h]
+\hspace{2cm}
+	\includegraphics[scale=0.5]{tableau_mem.png}
+	\caption{\label{étiquette} Exemple de parcours itératif de notre algorythme pour l'exemple du sujet}
+\end{figure}
+ \indent Notre algorithme commence dans l'état $A_0$,$B_0$ et calcule colonne par colonne tous les coûts de toutes des configurations. Pour ce faire, à l'étape $A_i$,$B_j$, le coût sera : \\ min \{ ($A_{i-1}$,$B_{j-1}$) + 10+L, ($A_i$,$B_{j-1}$) + 10+L, min\{ ($A_{i-k}$,$B_j$) + 15\} \}
+ \\ C'est ce que représente partiellement la figure en bas à droite de la figure~\ref{étiquette} page~\pageref{étiquette} 
+ \\ \indent Lorsque l'on arrive dans l'état $A_n$,$B_m$, on va remonter le chemin des pères. Donc en $A_i$,$B_j$ on ira en $A_{péreI}$,$B_{péreJ}$ en {\em 'échangeant'} la valeur des pères pour qu'une fois en $A_0$,$B_0$ on puisse redescendre en $A_n$,$B_m$ par le chemin de coût optimal tout en l'affichant.
+ } 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Analyse du coût théorique (3 points)}
@@ -59,6 +75,9 @@ et $c_1$ et $c_2$ de caractères des deux fichiers en entrée.
     } 
   \subsection{Place mémoire requise\,: }
     \paragraph{Justification\,: }
+    {
+    	Comme la partie 1 l'explique, nous stockons en mémoire (n+1)*(m+1) états.
+    }
 
   \subsection{Nombre de défauts de cache sur le modèle CO\,: }
     \paragraph{Justification\,: }

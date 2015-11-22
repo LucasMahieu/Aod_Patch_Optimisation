@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.5.24)  21 NOV 2015 22:43
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.5.24)  22 NOV 2015 13:05
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -846,53 +846,108 @@ LaTeX Font Info:    Try loading font information for U+lasy on input line 26.
 File: ulasy.fd 1998/08/17 v2.2e LaTeX symbol font definitions
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 44.
+(Font)              <10> on input line 38.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <7> on input line 44.
+(Font)              <7> on input line 38.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 44.
+(Font)              <5> on input line 38.
+
+
+LaTeX Warning: Reference `\IeC {\'e}tiquette' on page 1 undefined on input line
+ 46.
+
+
+LaTeX Warning: Reference `\IeC {\'e}tiquette' on page 1 undefined on input line
+ 46.
+
+
+! Package pdftex.def Error: File `tableau_mem.png' not found.
+
+See the pdftex.def package documentation for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.50 	\includegraphics[scale=0.5]{tableau_mem.png}
+                                                  
+? q
+OK, entering \batchmode...
+LaTeX Font Info:    Try loading font information for T1+lmtt on input line 50.
+
+(/usr/local/texlive/2015/texmf-dist/tex/latex/lm/t1lmtt.fd
+File: t1lmtt.fd 2009/10/30 v1.6 Font defs for Latin Modern
+)
+
+LaTeX Warning: Reference `\IeC {\'e}tiquette' on page 1 undefined on input line
+ 54.
+
+
+LaTeX Warning: Reference `\IeC {\'e}tiquette' on page 1 undefined on input line
+ 54.
+
+
+LaTeX Warning: Command \' invalid in math mode on input line 55.
+
+
+LaTeX Warning: Command \' invalid in math mode on input line 55.
+
+
+Overfull \hbox (13.44937pt too wide) in paragraph at lines 53--57
+[]\T1/qpl/m/n/10 Lorsque l'on ar-rive dans l'état $\OML/lmm/m/it/10 A[]$\T1/qpl
+/m/n/10 ,$\OML/lmm/m/it/10 B[]$\T1/qpl/m/n/10 , on va re-mon-ter le che-min des
+ pères. Donc en $\OML/lmm/m/it/10 A[]$\T1/qpl/m/n/10 ,$\OML/lmm/m/it/10 B[]$ \T
+1/qpl/m/n/10 on ira en $\OML/lmm/m/it/10 A[]$\T1/qpl/m/n/10 ,$\OML/lmm/m/it/10 
+B[]$
+ []
+
 
 Overfull \vbox (42.67912pt too high) has occurred while \output is active []
 
-
-[1
+ [1
 
 {/usr/local/texlive/2015/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
 Overfull \vbox (42.67912pt too high) has occurred while \output is active []
 
+ [2]
+Overfull \vbox (42.67912pt too high) has occurred while \output is active []
 
-[2] (./rapport/rapport.aux)
+ [3] (./rapport/rapport.aux)
+
+LaTeX Warning: There were undefined references.
+
 
 LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
 
  ) 
 Here is how much of TeX's memory you used:
- 14853 strings out of 493089
- 278888 string characters out of 6134842
- 321805 words of memory out of 5000000
- 18024 multiletter control sequences out of 15000+600000
- 55558 words of font info for 50 fonts, out of 8000000 for 9000
+ 14896 strings out of 493089
+ 279559 string characters out of 6134842
+ 323799 words of memory out of 5000000
+ 18061 multiletter control sequences out of 15000+600000
+ 55877 words of font info for 51 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  55i,8n,54p,450b,439s stack positions out of 5000i,500n,10000p,200000b,80000s
-{/usr/local/texlive/2015/texmf-dist/fonts/enc/dvips/tex-gyre/q-ec-sc.enc}{/us
-r/local/texlive/2015/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc}{/usr/local/texliv
-e/2015/texmf-dist/fonts/enc/dvips/lm/lm-mathex.enc}{/usr/local/texlive/2015/tex
-mf-dist/fonts/enc/dvips/lm/lm-mathit.enc}{/usr/local/texlive/2015/texmf-dist/fo
-nts/enc/dvips/tex-gyre/q-ec.enc}</usr/local/texlive/2015/texmf-dist/fonts/type1
-/public/lm/lmex10.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm
-/lmmi10.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmmi7.pfb
-></usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmr10.pfb></usr/loca
-l/texlive/2015/texmf-dist/fonts/type1/public/lm/lmr5.pfb></usr/local/texlive/20
-15/texmf-dist/fonts/type1/public/lm/lmr7.pfb></usr/local/texlive/2015/texmf-dis
-t/fonts/type1/public/lm/lmr8.pfb></usr/local/texlive/2015/texmf-dist/fonts/type
-1/public/tex-gyre/qplb.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/publ
-ic/tex-gyre/qplbi.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/te
-x-gyre/qplr.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/tex-gyre
-/qplri.pfb>
-Output written on ./rapport/rapport.pdf (2 pages, 192847 bytes).
+{/usr/local/texlive/2015/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc}{/usr/local/
+texlive/2015/texmf-dist/fonts/enc/dvips/lm/lm-mathex.enc}{/usr/local/texlive/20
+15/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc}{/usr/local/texlive/2015/texmf-d
+ist/fonts/enc/dvips/tex-gyre/q-ec-sc.enc}{/usr/local/texlive/2015/texmf-dist/fo
+nts/enc/dvips/lm/lm-ec.enc}{/usr/local/texlive/2015/texmf-dist/fonts/enc/dvips/
+lm/lm-mathit.enc}{/usr/local/texlive/2015/texmf-dist/fonts/enc/dvips/tex-gyre/q
+-ec.enc}</usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmex10.pfb></
+usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></usr/local/
+texlive/2015/texmf-dist/fonts/type1/public/lm/lmmi7.pfb></usr/local/texlive/201
+5/texmf-dist/fonts/type1/public/lm/lmr10.pfb></usr/local/texlive/2015/texmf-dis
+t/fonts/type1/public/lm/lmr5.pfb></usr/local/texlive/2015/texmf-dist/fonts/type
+1/public/lm/lmr7.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/
+lmr8.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmsy7.pfb></
+usr/local/texlive/2015/texmf-dist/fonts/type1/public/lm/lmtt10.pfb></usr/local/
+texlive/2015/texmf-dist/fonts/type1/public/tex-gyre/qplb.pfb></usr/local/texliv
+e/2015/texmf-dist/fonts/type1/public/tex-gyre/qplbi.pfb></usr/local/texlive/201
+5/texmf-dist/fonts/type1/public/tex-gyre/qplr.pfb></usr/local/texlive/2015/texm
+f-dist/fonts/type1/public/tex-gyre/qplri.pfb>
+Output written on ./rapport/rapport.pdf (3 pages, 225596 bytes).
 PDF statistics:
- 65 PDF objects out of 1000 (max. 8388607)
- 49 compressed objects within 1 object stream
+ 78 PDF objects out of 1000 (max. 8388607)
+ 59 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
  13 words of extra memory for PDF output out of 10000 (max. 10000000)
 

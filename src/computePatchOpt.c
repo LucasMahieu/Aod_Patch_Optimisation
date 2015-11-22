@@ -109,7 +109,10 @@ int computePatchOpt_it(int n, int m)
 					for (k=1; k<=j; k++) {
 						lBlen = getline(&tmpB, &lB, fB);
 						L += 10 + lBlen;
-						ecrit = asprintf(&toPrint,"+ %d\n%s",i,tmpB);
+						if( (ecrit = asprintf(&toPrint,"+ %d\n%s",i,tmpB))==-1){
+							printf(" Error ASPRINTF");
+							return EXIT_FAILURE;
+						}
 						pi = i;
 						pj = j-1;
 					}
@@ -128,7 +131,10 @@ int computePatchOpt_it(int n, int m)
 				// Si i=1, deletion coute 10
 					if (i==1) {
 						mem[i][0].cout = 10;
-						ecrit = asprintf(&toPrint,"d %d\n",i);
+						if ((ecrit = asprintf(&toPrint,"d %d\n",i)) ==-1){
+							printf(" Error ASPRINTF");
+							return EXIT_FAILURE;
+						}
 						pi = i-1;
 						pj = j;
 					}
@@ -136,7 +142,10 @@ int computePatchOpt_it(int n, int m)
 					else{
 				// Si i>1, deletion coute 15
 						mem[i][0].cout = 15;
-						ecrit = asprintf(&toPrint,"D %d %d\n",1,i);
+						if( (ecrit = asprintf(&toPrint,"D %d %d\n",1,i))==-1){
+							printf(" Error ASPRINTF");
+							return EXIT_FAILURE;
+						}
 						pi = i-i;
 						pj = j;
 					}
@@ -177,26 +186,38 @@ int computePatchOpt_it(int n, int m)
 						pj = j-1;
 					}
 					else{
-						ecrit = asprintf(&toPrint,"= %d\n%s",i,tmpB);
+						if((ecrit = asprintf(&toPrint,"= %d\n%s",i,tmpB))==-1){
+							printf(" Error ASPRINTF");
+							return EXIT_FAILURE;
+						}
 						pi = i-1;
 						pj = j-1;
 					}
 					if( add<=min ){
 						min = add;
-						ecrit = asprintf(&toPrint,"+ %d\n%s",i,tmpB);
+						if((ecrit = asprintf(&toPrint,"+ %d\n%s",i,tmpB))==-1){
+							printf(" Error ASPRINTF");
+							return EXIT_FAILURE;
+						}
 						pi = i;
 						pj = j-1;
 
 					}
 					if( del<min ){
 						min = del;
-						ecrit = asprintf(&toPrint,"d %d\n",i);
+						if((ecrit = asprintf(&toPrint,"d %d\n",i))==-1){
+							printf(" Error ASPRINTF");
+							return EXIT_FAILURE;
+						}
 						pi = i-1;
 						pj = j;
 					}
 					if( Del<min ){
 						min = Del;
-						ecrit = asprintf(&toPrint,"D %d %d\n",iD+1,i-iD);
+						if((ecrit = asprintf(&toPrint,"D %d %d\n",iD+1,i-iD))==-1){
+							printf(" Error ASPRINTF");
+							return EXIT_FAILURE;
+							}
 						pi = iD;
 						pj = j;
 					}
@@ -209,6 +230,9 @@ int computePatchOpt_it(int n, int m)
 				// On stock dans iD le min des cout de la colonne i
 					if(min<=mem[iD][j].cout) {
 						iD=i;
+					}
+					if (toPrint != NULL){
+						free(toPrint);
 					}
 				}
 			}
