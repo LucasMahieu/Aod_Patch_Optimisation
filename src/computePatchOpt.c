@@ -34,7 +34,7 @@ int computePatchOpt_it(int, int);
  */
 typedef struct {
 	int cout;
-	char* cmd;
+	fpos_t l_cpy;
 	int pereI;
 	int pereJ;
 } cellule;
@@ -72,24 +72,25 @@ int computePatchOpt_it(int n, int m)
 	//!Initialisation des variables
 	//! -------------------------------
 	int i=0, j=0;
-	int L=0, ecrit=0;
 	int min = 0, cout=0;
-	char* toPrint = (char*)malloc(sizeof(char)); 
 	char* tmpA = NULL;
 	size_t lA = 0;
 	char* tmpB = NULL;
 	size_t lB = 0;
-	int k=0;
-	ssize_t lAlen=0, lBlen=200;
+	fpos_t l_pos=0;
+	int lBlen=0, lAlen=0;
 	int cd = 10, cD=15, ca=0, cs=0;
 	int pi=0,pj=0;
 	int iD=0;
 	int add=0, sub=0, del=0, Del=0;
+	int sumB=0;
 	//! -------------------------------
 	rewind(fB);
 	for(j = 0; j <=m; j++) {
 		if (j!=0) {
+			fgetpos(fB, &l_pos);
 			lBlen = getline(&tmpB, &lB, fB);
+			sumB += 10 + lBlen;
 		}
 		rewind(fA);
 		iD=0;
@@ -97,31 +98,26 @@ int computePatchOpt_it(int n, int m)
 			if(i!=0){
 				lAlen = getline(&tmpA, &lA, fA);
 			}
-			L=0;
 			// i=j=0	
 			if (i==0) {
 				if (j==0) {
 					mem[0][0].cout = 0;
+					mem[0][0].pereI = 0;
+					mem[0][0].pereJ = 0;
 				}
 				//i=0 et j!=0  -> f(0,j) = sum(10+LkB) avec k=1..j, calculé à chaque getline
 				else{
-					rewind(fB);
-					for(k=1; k<=j; k++){
-						lBlen = getline(&tmpB, &lB,fB);
-						L += 10 + lBlen;
-					}
+				//	rewind(fB);
+				//	for(k=1; k<=j; k++){
+				//		lBlen = getline(&tmpB, &lB,fB);
+				//		L += 10 + lBlen;
+				//	}
 					pi = i;
 					pj = j-1;
-					free(toPrint);
-					toPrint = (char*)malloc((1+1+sizeof(int)+1+(strlen(tmpB)+1)+1)*sizeof(char));
-					if( (ecrit = sprintf(toPrint,"+ %d\n%s",i,tmpB))==-1){
-						printf(" Error SPRINTF");
-						return EXIT_FAILURE;
-					}
+					//if( (ecrit = sprintf(toPrint,"+ %d\n%s",i,tmpB))==-1){
 					//Maj du cout, de la cmd, et des peres pour retrouver le chemin
-					mem[0][j].cout = L; 
-					mem[0][j].cmd = (char*)malloc((strlen(toPrint)+1)*sizeof(char));
-					strcpy(mem[0][j].cmd, toPrint);
+					mem[0][j].cout = sumB; 
+					mem[0][j].l_cpy = l_pos;
 					mem[0][j].pereI = pi; 
 					mem[0][j].pereJ = pj; 
 				}
@@ -132,37 +128,24 @@ int computePatchOpt_it(int n, int m)
 				if (j==0) {
 					// Si i=1, deletion coute 10
 					if (i==1) {
+						//if ((ecrit = sprintf(toPrint,"d %d\n",i)) ==-1){
 						mem[i][0].cout = 10;
-						free(toPrint);
-						toPrint = (char*)malloc((1+1+sizeof(int)+1+1)*sizeof(char));
-						if ((ecrit = sprintf(toPrint,"d %d\n",i)) ==-1){
-							printf(" Error ASPRINTF");
-							return EXIT_FAILURE;
-						}
 						pi = i-1;
 						pj = j;
 					}
 					// j=0 et i!=1
 					else{
 						// Si i>1, deletion coute 15
+						//if( (ecrit = sprintf(toPrint,"D %d %d\n",1,i))==-1){
 						mem[i][0].cout = 15;
-						free(toPrint);
-						toPrint = (char*)malloc((1+1+2*sizeof(int)+1+1+1)*sizeof(char));
-						if( (ecrit = sprintf(toPrint,"D %d %d\n",1,i))==-1){
-							printf(" Error ASPRINTF");
-							return EXIT_FAILURE;
-						}
 						pi = i-i;
 						pj = j;
 					}
-					mem[i][0].cmd = (char*)calloc(strlen(toPrint)+1,sizeof(char));
-					strcpy(mem[i][0].cmd, toPrint);
 					mem[i][0].pereI = pi; 
 					mem[i][0].pereJ = pj; 
 				}
 				// i!=0 et j!=0
 				else {
-					L = lBlen;
 					// Pour comparer Li(A) et Lj(B) n regarde d'abords leur taille	
 					if (lBlen == lAlen){
 						if(strcmp(tmpA,tmpB) == 0){
@@ -171,14 +154,14 @@ int computePatchOpt_it(int n, int m)
 						}
 						else{
 							//Même taille mais différents
-							cs = 10 + L;
+							cs = 10 + lBlen;
 						}
 					}
 					//Taille différentes donc différent
 					else {
-						cs = 10 + L;
+						cs = 10 + lBlen;
 					}
-					ca = 10 + L;
+					ca = 10 + lBlen;
 					// Calcules du cout des 3 opérations possibles
 					add = mem[i][j-1].cout + ca;
 					sub = mem[i-1][j-1].cout + cs;
@@ -187,59 +170,36 @@ int computePatchOpt_it(int n, int m)
 					// On selectionne l'opération de cout min
 					min = sub;
 					if(cs == 0){
-						free(toPrint);
-						toPrint = (char*)malloc(1*sizeof(char));
-						ecrit = sprintf(toPrint,"");
+						//ecrit = sprintf(toPrint,"");
 						pi = i-1;
 						pj = j-1;
 					}
 					else{
-						free(toPrint);
-						toPrint = (char*)malloc((1+1+sizeof(int)+1+strlen(tmpB)+1)*sizeof(char));
-						if((ecrit = sprintf(toPrint,"= %d\n%s",i,tmpB))==-1){
-							printf(" Error ASPRINTF");
-							return EXIT_FAILURE;
-						}
+						//if((ecrit = sprintf(toPrint,"= %d\n%s",i,tmpB))==-1){
 						pi = i-1;
 						pj = j-1;
 					}
 					if( add<=min ){
 						min = add;
-						free(toPrint);
-						toPrint = (char*)malloc((1+1+sizeof(int)+1+strlen(tmpB)+1)*sizeof(char));
-						if((ecrit = sprintf(toPrint,"+ %d\n%s",i,tmpB))==-1){
-							printf(" Error ASPRINTF");
-							return EXIT_FAILURE;
-						}
+						//if((ecrit = sprintf(toPrint,"+ %d\n%s",i,tmpB))==-1){
 						pi = i;
 						pj = j-1;
 					}
 					if( del<min ){
 						min = del;
-						free(toPrint);
-						toPrint = (char*)malloc((1+1+sizeof(int)+1+1)*sizeof(char));
-						if((ecrit = sprintf(toPrint,"d %d\n",i))==-1){
-							printf(" Error ASPRINTF");
-							return EXIT_FAILURE;
-						}
+						//if((ecrit = sprintf(toPrint,"d %d\n",i))==-1){
 						pi = i-1;
 						pj = j;
 					}
 					if( Del<min ){
 						min = Del;
-						free(toPrint);
-						toPrint = (char*)malloc((1+1+2*sizeof(int)+1+1+1)*sizeof(char));
-						if((ecrit = sprintf(toPrint,"D %d %d\n",iD+1,i-iD))==-1){
-							printf(" Error ASPRINTF");
-							return EXIT_FAILURE;
-						}
+						//if((ecrit = sprintf(toPrint,"D %d %d\n",iD+1,i-iD))==-1){
 						pi = iD;
 						pj = j;
 					}
 					// Maj du cout, de la cmd, et de l'opération qui a donnée ce min
 					mem[i][j].cout = min;
-					mem[i][j].cmd = (char*)calloc(strlen(toPrint)+1,sizeof(char));
-					strcpy(mem[i][j].cmd, toPrint);
+					mem[i][j].l_cpy = l_pos;
 					mem[i][j].pereI = pi;
 					mem[i][j].pereJ = pj;
 					// On stock dans iD le min des cout de la colonne i
@@ -248,14 +208,8 @@ int computePatchOpt_it(int n, int m)
 					}
 				}
 			}
-			//free(tmpA);
-			//lA=0;
 		}
-		//free(toPrint);
-		//free(tmpB);
-		//lB = 0;
 	}
-	free(toPrint);
 	i = i-1;
 	j = j-1;
 	cout = mem[i][j].cout;
@@ -291,9 +245,8 @@ int computePatchOpt_it(int n, int m)
 		printf("-------------- %02dminutes %02dsec %06dus -------------------------\n",min,sec,usec);
 		}
 		*/
-	//if(tmpA != NULL) free(tmpA);
-	//if (tmpB!=NULL) free(tmpB);
-	//if(toPrint != NULL) free(toPrint);
+	free(tmpA);
+	free(tmpB);
 	return cout;
 }
 
@@ -363,7 +316,7 @@ int main ( int argc, char* argv[] )
 		}
 		for (j = 0;  j< m+1; j++) {
 			mem[i][j].cout = 0;
-			mem[i][j].cmd = (char*)calloc(1,sizeof(char));
+			mem[i][j].l_cpy = 0;
 			mem[i][j].pereI = 0;
 			mem[i][j].pereJ = 0;
 		}
@@ -380,10 +333,39 @@ int main ( int argc, char* argv[] )
 
 	// Dans cette partie, on créer le patch dans le fichier de sortie ou dans stdin
 	int l=0, c=0,lTmp=l, cTmp=c;
-	do {
-		if (!(l==0 && c==0)){
-			//			fputs(mem[l][c].cmd,p);
-			printf("%s",mem[l][c].cmd);
+	int pi=0, pj=0;
+	char* str=NULL;
+	size_t lB=0;
+	do{
+		pi = mem[l][c].pereI;
+		pj = mem[l][c].pereJ;
+		//fputs(mem[l][c].cmd,p);
+		// Cas de la SUBTITUTION		
+		if( (pi==l+1) && (pj==c+1) ){
+			// Al = Bc -> cout = 0
+			if(mem[l][c].cout == mem[pi][pj].cout){
+				//On doit recopier Al sur la sortie -> le patch ne fait rien
+			}
+			//On doit substituer la ligne Al par Bc
+			else{
+				fsetpos(fB, &mem[pi][pj].l_cpy);
+				getline(&str, &lB, fB);
+				printf("= %d\n%s",pi,str);
+			}
+		}
+		//Cas de l'addition
+		else if( (pi==l) && (pj==c+1) ){
+			fsetpos(fB, &mem[pi][pj].l_cpy);
+			getline(&str, &lB, fB);
+			printf("+ %d\n%s",l,str);
+		}
+		//Cas de la deletion simple
+		else if( (pi==l+1) && (pj==c)){
+			printf("d %d\n",l+1);	
+		}
+		//Cas de la deletion multiple
+		else{
+			printf("D %d %d\n",l+1,pi-l);
 		}
 		//		if(compteur>=m/100){
 		//			compteur = 0;
@@ -396,15 +378,12 @@ int main ( int argc, char* argv[] )
 		c = mem[lTmp][cTmp].pereJ;
 		cTmp = c;
 		lTmp = l;
-	}while(l>-1 && c>-1);
+	}while(l<n || c<m);
 
 
 	//	printf(" 100%%\n");
 	//	printf("-------------- Patch écrit dans '%s'\n",argv[3]);
 	for (i = n;  i>-1; i--) {
-		for (j = m;  j>-1; j--) {
-			free(mem[i][j].cmd);
-		}
 		free(mem[i]);
 	}
 	free(mem);
