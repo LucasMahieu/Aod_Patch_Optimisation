@@ -472,9 +472,9 @@ int main ( int argc, char* argv[] )
 	
 	AffichePatch();
 
+	free(mem);
 	munmap(pA,statsA.st_size);
 	munmap(pB,statsB.st_size);
-	free(mem);
 	close(fA);
 	close(fB);
 	return EXIT_SUCCESS;
