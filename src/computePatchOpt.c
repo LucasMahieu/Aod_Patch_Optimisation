@@ -97,16 +97,21 @@ int computePatchOpt_it(int n, int m)
 	int iD=0;
 	int add=0, sub=0, del=0, Del=0;
 	int sumB=0;
+	size_t ligneB=0, ligneA=0;
 	//! -------------------------------
 	for(j = 0; j <=m; j++) {
 		if (j!=0) {
+			ligneB=posB;
 			lBlen = GetLineB(pB, &posB);
-			sumB += 10 + posB;
+			sumB += 10 + lBlen;
 		}
 		iD=0;
+		posA=0;
+		lAlen=0;
+		ligneA=0;
 		for(i = 0; i <=n; i++) {
 			if(i!=0){
-				posA += lAlen;
+				ligneA = posA;
 				lAlen = GetLineA(pA, &posA);
 			}
 			// i=j=0	
@@ -122,7 +127,7 @@ int computePatchOpt_it(int n, int m)
 					pj = j-1;
 					//Maj du cout, de la cmd, et des peres pour retrouver le chemin
 					(*(mem+pos_tab(0,j))).cout = sumB; 
-					(*(mem+pos_tab(0,j))).l_cpy = posB;
+					(*(mem+pos_tab(0,j))).l_cpy = ligneB;
 					(*(mem+pos_tab(0,j))).pereI = pi; 
 					(*(mem+pos_tab(0,j))).pereJ = pj; 
 				}
@@ -151,7 +156,7 @@ int computePatchOpt_it(int n, int m)
 				else {
 					// Pour comparer Li(A) et Lj(B) n regarde d'abords leur taille	
 					if (lBlen == lAlen){
-						if(CmpLine(pA,posA,pB,posB) == 1){
+						if(CmpLine(pA,ligneA,pB,ligneB) == 1){
 							//Même taille et même chaine 
 							cs = 0;
 						}
@@ -171,16 +176,10 @@ int computePatchOpt_it(int n, int m)
 					del = (*(mem+pos_tab(i-1,j))).cout + cd;
 					Del = (*(mem+pos_tab(iD,j))).cout + cD;
 					// On selectionne l'opération de cout min
+					// '= i\n%s' ou 'rien' si cs==0
 					min = sub;
-					if(cs == 0){
-						pi = i-1;
-						pj = j-1;
-					}
-					// '= i\n%s'
-					else{
-						pi = i-1;
-						pj = j-1;
-					}
+					pi = i-1;
+					pj = j-1;
 					// '+ i\n%s'
 					if( add<=min ){
 						min = add;
@@ -203,7 +202,7 @@ int computePatchOpt_it(int n, int m)
 					}
 					// Maj du cout, de la cmd, et de l'opération qui a donnée ce min
 					(*(mem+pos_tab(i,j))).cout = min;
-					(*(mem+pos_tab(i,j))).l_cpy = posB;
+					(*(mem+pos_tab(i,j))).l_cpy = ligneB;
 					(*(mem+pos_tab(i,j))).pereI = pi;
 					(*(mem+pos_tab(i,j))).pereJ = pj;
 					// On stock dans iD le min des cout de la colonne i
@@ -269,7 +268,7 @@ int GetLineA(char* p, size_t* pos)
 	if((*pos)>=statsA.st_size){
 		return -1;
 	}
-	(*pos)++;
+	(*pos)+=1;
 	return len+1;
 }
 int GetLineB(char* p, size_t* pos)
@@ -280,10 +279,10 @@ int GetLineB(char* p, size_t* pos)
 		(*pos)++;
 		len++;
 	}
-	if((*pos)>=statsA.st_size){
+	if((*pos)>=statsB.st_size){
 		return -1;
 	}
-	(*pos)++;
+	(*pos)+=1;
 	return len+1;
 }
 
@@ -295,13 +294,15 @@ int GetLineB(char* p, size_t* pos)
 int CmpLine(char* p1, size_t pos1, char* p2, size_t pos2)
 {
 	char c1,c2;
-	while( ((c1=*(p1+pos1))!='\n') && ((c2=*(p2+pos2))!='\n') ){
+	size_t i=0;
+	while( ((c1=*(p1+pos1+i))!='\n') && ((c2=*(p2+pos2+i))!='\n') ){
+		i++;
 		if(c1!=c2){
 			return 0;
 		}
 	}
-	if(c1=='\n'){
-		if(c2=='\n'){
+	if(*(p1+pos1+i)=='\n'){
+		if(*(p2+pos2+i)=='\n'){
 			return 1;
 		}
 		else{
@@ -316,7 +317,7 @@ int CmpLine(char* p1, size_t pos1, char* p2, size_t pos2)
 
 int pos_tab(int i, int j)
 {
-	return (i*nb_ligne_A + j);
+	return (i+j*(nb_ligne_A+1));
 }
 
 
@@ -412,8 +413,9 @@ int main ( int argc, char* argv[] )
 	// Dans cette partie, on créer le patch dans le fichier de sortie ou dans stdin
 	int l=0, c=0,lTmp=l, cTmp=c;
 	int pi=0, pj=0;
-	char* str=NULL;
+//	char* str=NULL;
 	char car;
+	size_t i=0;
 	do{
 		pi = (*(mem+pos_tab(l,c))).pereI;
 		pj = (*(mem+pos_tab(l,c))).pereJ;
@@ -427,23 +429,27 @@ int main ( int argc, char* argv[] )
 			//On doit substituer la ligne Al par Bc
 			else{
 				printf("= %d\n",pi);
-				while( (car=*(pB+(*(mem+pos_tab(pi,pj))).l_cpy))!='\n'){
+				while( (car=*(pB+(*(mem+pos_tab(pi,pj))).l_cpy+i))!='\n'){
+					i++;
 					printf("%c",car);
 				}
 				printf("\n");
+				i=0;
 			}
 		}
 		//Cas de l'addition
 		else if( (pi==l) && (pj==c+1) ){
-			printf("+ %d\n%s",l,str);
-			while( (car=*(pB+(*(mem+pos_tab(pi,pj))).l_cpy))!='\n'){
+			printf("+ %d\n",pi);
+			while( (car=*(pB+(*(mem+pos_tab(pi,pj))).l_cpy+i))!='\n'){
+				i++;
 				printf("%c",car);
 			}
 			printf("\n");
+			i=0;
 		}
 		//Cas de la deletion simple
 		else if( (pi==l+1) && (pj==c)){
-			printf("d %d\n",l+1);	
+			printf("d %d\n",pi);	
 		}
 		//Cas de la deletion multiple
 		else{
