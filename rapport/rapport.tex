@@ -26,11 +26,6 @@ MAHIEU LUCAS étudiant$_1$ (SLE\_PHELMA$_1$)
 \maketitle
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\paragraph{\em Préambule}
-{\em \begin{itemize} 
-   \item Compléter ce patr
-\end{itemize}
-}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Principe de notre  programme (1 point)}
@@ -65,19 +60,16 @@ et $c_1$ et $c_2$ de caractères des deux fichiers en entrée.
 
   \subsection{Nombre  d'opérations en pire cas\,: }
     \paragraph{Justification\,: }
-    {\em La justification peut être par exemple de la forme: \\ 
-       "Le programme itératif contient les boucles $k_1=...$, $k_2= ...$ etc correspondant à la somme 
-      $$T(n_1, n_2, c_1, c_2) = \sum_{k_1=...}^{...} ... \sum ... + \sum_{i=...}^{...} ...$$ 
-      somme que nous avons calculée (ou majorée) par la technique de  ... " \\
-      ou  encore\,:  \\
-      "les appels récursifs du programme permettent de modéliser son coût par le système d'équations aux récurrences 
-      $$T(k_1, k_2) = ...  \mbox{~avec~les~conditions~initiales~....~} $$
-      Le coût indiqué est obtenu en résolvant ce système par la méthode de  .... "
+    {Dans le pire cas, il faut remplacer toutes les lignes de F1 par les lignes de F2: 
+      \\Le programme itératif contient deux boucles imbriquées $k_1=[0,n_1]$, $k_2=[0,n_2]$ chacune de ces boucles traitent respectivement une lignes des fichiers F1 et F2. Ces deux boucles calcules le nombre de caractères sur leur lignes respectives. Ensuite seule des opérations à coût constants sont réalisées pour calculer le coût minimum et pour créer le 'chemin' idéal. A cela nous ajoutons une somme qui correspond au coût de l'affichage du patch dans le pire cas (écriture de $c_2$ caractère).
+      $$T(n_1, n_2, c_1, c_2) = \sum_{k_2=0}^{n_2}  \sum_{k_1=0}^{n_1} (c_1/n_1)*(c_2/n_2) + \sum_{i=0}^{n_2} c_2/n_2 $$ 
+      cette somme calculée donne approximativement: $$ T(n_1, n_2, c_1, c_2) = \Theta (c_1*c_2+c_2) = \Theta (c_1*c_2) $$ 
     } 
   \subsection{Place mémoire requise\,: }
     \paragraph{Justification\,: }
     {
-    	Comme la partie 1 l'explique, nous stockons en mémoire (n+1)*(m+1) états.
+    	Comme la partie 1 l'explique, nous stockons en mémoire $(n+1)*(m+1)$ états sachant que 1 état prend un place de $4*sizeof(int)$, nous mémorisons $4*sizeof(int)*(n+1)*(m+1)$ octets.
+	\\De plus, en utilisant mmap, nous 'mappons' en mémoire les fichiers d'entrée et de sortie, ainsi nous utilisons $(c1+c2)$ octet de plus. \\Ce qui fait un totale de $4*sizeof(int)*(n+1)*(m+1) + (c1+c2)$
     }
 
   \subsection{Nombre de défauts de cache sur le modèle CO\,: }
