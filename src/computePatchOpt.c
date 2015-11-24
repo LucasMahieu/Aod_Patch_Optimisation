@@ -28,13 +28,15 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-
+#define  cD 15
+#define  cd 10
 
 int computePatchOpt_it(int, int);
 int pos_tab(int i, int j);
 int CmpLine(char* p1, size_t pos1, char* p2, size_t pos2);
 int GetLineA(char* p, size_t* pos);
 int GetLineB(char* p, size_t* pos);
+void AffichePatch(void);
 /**
  * \struct "cellule" qui contient pour chaque combinaison de ligne AiBj 
  * le cout min, 
@@ -50,21 +52,40 @@ typedef struct {
 
 /**
  * Variable globale: Pointeur qui servira à stocker toutes les cellules
+ * tableau Mono-dimensionel pour accéder à la cellule (i,j) utiliser pos_tab(i,j)
  */
 cellule* mem = NULL;
 /**
  * Pointeur vers la zone mem fA
  */
-int fA;
-struct stat statsA;
-int nb_ligne_A;
 char* pA;
+/**
+ * Handle du fichier A
+ */
+int fA;
+/**
+ * Contient toutes les infos du fichier A : Taille etc
+ */
+struct stat statsA;
+/**
+ * Nombre de ligne du fichier B
+ */
+int nb_ligne_A;
 /**
  * Pointeur vers la zone mémoire de fB
  */
-int fB;
 char* pB;
+/**
+ * Handle du fichier A
+ */
+int fB;
+/**
+ * Contient toutes les infos du fichier B : Taille etc
+ */
 struct stat statsB;
+/**
+ * Nombre de ligne du fichier A
+ */
 int nb_ligne_B;
 
 /**
@@ -86,18 +107,32 @@ int computePatchOpt_it(int n, int m)
 		*/
 	//!Initialisation des variables
 	//! -------------------------------
+	// Indices des 2 boucles
 	int i=0, j=0;
+	// min = cout de l'opération la moins couteuse
+	// cout = cout du patch optimal
 	int min = 0, cout=0;
-//	char* tmpA = NULL;
-//	char* tmpB = NULL;
+	// Va repéré la position (en octets) du curseur dans le  fichier B et A.
 	size_t posB=0, posA=0;
+	// nombre de char lu à chaque ligne de A et de B
 	int lBlen=0, lAlen=0;
-	int cd = 10, cD=15, ca=0, cs=0;
-	int pi=0,pj=0;
-	int iD=0;
-	int add=0, sub=0, del=0, Del=0;
-	int sumB=0;
+	// Repère la ligne sur laquelle on est en train de calculer le coût 
+	// C'est cette ligne qui sera sauvegarder dans la structure de cellule
 	size_t ligneB=0, ligneA=0;
+	// Constante qui contiendrons les coûts pour passer 
+	// d'une configuration à une autre selon l'instruction
+	// ca = Ajout, cs = Substitution ou (#define cd = délétion simple) et (#define cD = délétion  multiple).
+	int ca=0, cs=0;
+	// Contiendra le coût total de l'opération
+	int add=0, sub=0, del=0, Del=0;
+	// Variable contenant les indices des cellules pères
+	int pi=0,pj=0;
+	// Variable contenant l'indice de ma case qui donnera la délétion de coût min 
+	// c'est le k qui minimise sum(10 + Lk(B)) pour k=1..j
+	int iD=0;
+	// Contiendra la somme(10 + Lj(B) ) pour tout les f(0,j) avec j>1
+	int sumB=0;
+
 	//! -------------------------------
 	for(j = 0; j <=m; j++) {
 		if (j!=0) {
@@ -117,15 +152,16 @@ int computePatchOpt_it(int n, int m)
 			// i=j=0	
 			if (i==0) {
 				if (j==0) {
+					// Fichier vide qui donne un fichier vide
 					(*(mem+pos_tab(0,0))).cout = 0;
 					(*(mem+pos_tab(0,0))).pereI = 0;
 					(*(mem+pos_tab(0,0))).pereJ = 0;
 				}
-				//i=0 et j!=0  -> f(0,j) = sum(10+LkB) avec k=1..j, calculé à chaque getline
+				//i=0 et j!=0  -> f(0,j) = sum(10+LkB) avec k=1..j, calculé à chaque GetLine
 				else{
 					pi = i;
 					pj = j-1;
-					//Maj du cout, de la cmd, et des peres pour retrouver le chemin
+					//Maj du coût, de la ligne à copier du fichierB, et des pères pour retrouver le chemin
 					(*(mem+pos_tab(0,j))).cout = sumB; 
 					(*(mem+pos_tab(0,j))).l_cpy = ligneB;
 					(*(mem+pos_tab(0,j))).pereI = pi; 
@@ -134,9 +170,9 @@ int computePatchOpt_it(int n, int m)
 			} 
 			// i!=0 
 			else {
-				//Pour j=0, on Delete
+				//Pour j=0, on Délétionne
 				if (j==0) {
-					// Si i=1, deletion coute 10
+					// Si i=1, délétion coûte 10
 					if (i==1) {
 						(*(mem+pos_tab(i,0))).cout = 10;
 						pi = i-1;
@@ -144,7 +180,7 @@ int computePatchOpt_it(int n, int m)
 					}
 					// j=0 et i!=1
 					else{
-						// Si i>1, deletion coute 15
+						// Si i>1, délétion coûte 15
 						(*(mem+pos_tab(i,0))).cout = 15;
 						pi = i-i;
 						pj = j;
@@ -170,37 +206,36 @@ int computePatchOpt_it(int n, int m)
 						cs = 10 + lBlen;
 					}
 					ca = 10 + lBlen;
-					// Calcules du cout des 3 opérations possibles
+					// Calcule du coût des 4 opérations possibles
 					add = (*(mem+pos_tab(i,j-1))).cout + ca;
 					sub = (*(mem+pos_tab(i-1,j-1))).cout + cs;
 					del = (*(mem+pos_tab(i-1,j))).cout + cd;
 					Del = (*(mem+pos_tab(iD,j))).cout + cD;
-					// On selectionne l'opération de cout min
-					// '= i\n%s' ou 'rien' si cs==0
+					// On sélectionne l'opération de cout min
+					// '= i\n%s' ou 'rien' si cs==0 -> Substitution 
 					min = sub;
 					pi = i-1;
 					pj = j-1;
-					// '+ i\n%s'
+					// '+ i\n%s' -> ajout après la ligne i de A
 					if( add<=min ){
 						min = add;
 						pi = i;
 						pj = j-1;
 					}
-					//'d i\n'
+					//'d i\n'-> Délétion simple
 					if( del<min ){
 						min = del;
-						//if((ecrit = sprintf(toPrint,"d %d\n",i))==-1){
 						pi = i-1;
 						pj = j;
 					}
-					// 'D iD+1 i-iD\n'
+					// 'D iD+1 i-iD\n' Délétion multiple
 					if( Del<min ){
 						min = Del;
-						//if((ecrit = sprintf(toPrint,"D %d %d\n",iD+1,i-iD))==-1){
 						pi = iD;
 						pj = j;
 					}
-					// Maj du cout, de la cmd, et de l'opération qui a donnée ce min
+					// Maj du cout, de la ligne de B qu'il faudra recopier dans le patch,
+					//  et de la cellule (pi,pj) qui a donnée ce min
 					(*(mem+pos_tab(i,j))).cout = min;
 					(*(mem+pos_tab(i,j))).l_cpy = ligneB;
 					(*(mem+pos_tab(i,j))).pereI = pi;
@@ -215,10 +250,13 @@ int computePatchOpt_it(int n, int m)
 	}
 	i = i-1;
 	j = j-1;
+	
+	//! Le coût optimal se trouve dans la dernière case du tableau mem.
 	cout = (*(mem+pos_tab(i,j))).cout;
+
+	//! Inverse (swap) tous les fils et les pères pour afficher le patch dans l'ordre des ligne croissante
 	int prevPi=n, prevPj=m;
 	int futurPi=-1, futurPj=-1;
-
 	do{
 		prevPi = (*(mem+pos_tab(i,j))).pereI;
 		prevPj = (*(mem+pos_tab(i,j))).pereJ;
@@ -229,33 +267,13 @@ int computePatchOpt_it(int n, int m)
 		i = prevPi;
 		j = prevPj;
 	}while(futurPi>0 || futurPj>0);
-	// Cette zone commentée permet une bel affichage du résulta du programme 
-	/*	if( gettimeofday(&tempsF, NULL) ){
-		printf(" erreur getTimeOfDay fin !! ");
-		}
-		else{
-		suseconds_t timeE = tempsF.tv_sec*1000000 + tempsF.tv_usec;
-		suseconds_t timeB = tempsD.tv_sec*1000000 + tempsD.tv_usec;
-		int sec =(int)((timeE - timeB)/1000000);
-		int usec =(int)((timeE - timeB)-1000000*sec);
-		int minutes = 0;
-		if (sec>=60){
-		min = sec/60;
-		sec = sec%60;
-		}
-		printf("#############################################################\n");
-		printf("-------------- Patch Optimal généré en ----------------------\n");
-		printf("-------------- %02dminutes %02dsec %06dus -------------------------\n",min,sec,usec);
-		}
-		*/
-//	free(tmpA);
-//	free(tmpB);
+
 	return cout;
 }
 
 /**
- * Avance la position du nombre de char lu
- * retourne le nombre de char lu
+ * Avance la position du nombre de char lu avant le '\n' = lit 1 ligne
+ * \return le nombre de char lu
  */
 int GetLineA(char* p, size_t* pos)
 {
@@ -271,6 +289,11 @@ int GetLineA(char* p, size_t* pos)
 	(*pos)+=1;
 	return len+1;
 }
+
+/**
+ * Avance la position du nombre de char lu avant le '\n' = lit 1 ligne
+ * \return le nombre de char lu
+ */
 int GetLineB(char* p, size_t* pos)
 {
 	char c;
@@ -315,12 +338,75 @@ int CmpLine(char* p1, size_t pos1, char* p2, size_t pos2)
 
 }
 
+/**
+ * Retourne i+j*(nb_ligne_A+1) position de la cellule i j par rapport a mem 
+ * \param i position i de la cellule (i,j)
+ * \param j position de la cellule (i,j)
+ * \return offset par rapport à mem
+ */
 int pos_tab(int i, int j)
 {
 	return (i+j*(nb_ligne_A+1));
 }
 
+/**
+ * \fn void AffichePatch(void)
+ * Cette fonction affiche le patch sur la sortie standard 
+ * Pour le récupérer lancer bin/computePatchOpt fA fB > patch
+ */
+void AffichePatch(void)
+{
+	int l=0, c=0,lTmp=l, cTmp=c;
+	int pi=0, pj=0;
+	char car;
+	size_t i=0;
+	do{
+		pi = (*(mem+pos_tab(l,c))).pereI;
+		pj = (*(mem+pos_tab(l,c))).pereJ;
+		// Cas de la SUBTITUTION		
+		if( (pi==l+1) && (pj==c+1) ){
+			// Al = Bc -> cout = 0
+			if((*(mem+pos_tab(l,c))).cout == (*(mem+pos_tab(pi,pj))).cout){
+				//On doit recopier Al sur la sortie -> le patch ne fait rien
+			}
+			//On doit substituer la ligne Al par Bc
+			else{
+				printf("= %d\n",pi);
+				while( (car=*(pB+(*(mem+pos_tab(pi,pj))).l_cpy+i))!='\n'){
+					i++;
+					printf("%c",car);
+				}
+				printf("\n");
+				i=0;
+			}
+		}
 
+		//Cas de l'addition
+		else if( (pi==l) && (pj==c+1) ){
+			printf("+ %d\n",pi);
+			while( (car=*(pB+(*(mem+pos_tab(pi,pj))).l_cpy+i))!='\n'){
+				i++;
+				printf("%c",car);
+			}
+			printf("\n");
+			i=0;
+		}
+
+		//Cas de la deletion simple
+		else if( (pi==l+1) && (pj==c)){
+			printf("d %d\n",pi);	
+		}
+
+		//Cas de la deletion multiple
+		else{
+			printf("D %d %d\n",l+1,pi-l);
+		}
+		l = (*(mem+pos_tab(lTmp,cTmp))).pereI;
+		c = (*(mem+pos_tab(lTmp,cTmp))).pereJ;
+		cTmp = c;
+		lTmp = l;
+	}while(l<nb_ligne_A || c<nb_ligne_B);
+}
 
 /**
  * \fn int main ( int argc, char* argv[] )
@@ -334,28 +420,11 @@ int main ( int argc, char* argv[] )
 		printf(" !!!! lancer: computepatchOpt F1 F2 !!!!\n");
 		return EXIT_FAILURE;
 	}
-	// Permet un affichage graphique du résultat 
-	/*	if( argc!=4 ){
-		printf(" !!!! lancer: computepatchOpt source target patch_à_creer !!!!!\n");
-		return EXIT_FAILURE;
-		}
-		*/
-	//	printf("#############################################################\n");
-	//	printf("#################  GENERATEUR DE PATCH OPTIMAL ##############\n");
-	//	printf("#############################################################\n");
-	//	printf("-------------- Entrée du Patch : %s\n",argv[1]);
-	//	printf("-------------- Sortie du Patch : %s\n",argv[2]);
+
 	int n = 0;
 	int m = 0;
+	int cout =0;
 
-/*	   struct timeval tempsDmain;
-	   struct timeval tempsFmain;
-	   if( gettimeofday(&tempsDmain,NULL)){
-	   printf("erreur GetTimeOfDay !!! ");
-	   return -1;
-	   }
-	   */
-	
 
 	if(stat(argv[1], &statsA)){
 		printf("Erreur stat f1");
@@ -397,105 +466,16 @@ int main ( int argc, char* argv[] )
 	nb_ligne_B = m;
 
 	mem = (cellule*)malloc((n+1)*(m+1)*sizeof(*mem));
+
+	cout = computePatchOpt_it(n,m);
+	//printf("%d\n",cout);
 	
+	AffichePatch();
 
-
-	int cout = computePatchOpt_it(n,m);
-	printf("%d\n",cout);
-	//	printf("-------------- Coût du Patch :  %d \n",computePatchOpt_it(n,m));
-	//	printf("#############################################################\n");
-	//	printf("-------------- Patch en écriture veuillez patienter\n");
-
-	//	FILE* p = NULL;
-	//	p = fopen(argv[3],"w");
-	//	int compteur = 0;
-
-	// Dans cette partie, on créer le patch dans le fichier de sortie ou dans stdin
-	int l=0, c=0,lTmp=l, cTmp=c;
-	int pi=0, pj=0;
-//	char* str=NULL;
-	char car;
-	size_t i=0;
-	do{
-		pi = (*(mem+pos_tab(l,c))).pereI;
-		pj = (*(mem+pos_tab(l,c))).pereJ;
-		//fputs(mem[l][c].cmd,p);
-		// Cas de la SUBTITUTION		
-		if( (pi==l+1) && (pj==c+1) ){
-			// Al = Bc -> cout = 0
-			if((*(mem+pos_tab(l,c))).cout == (*(mem+pos_tab(pi,pj))).cout){
-				//On doit recopier Al sur la sortie -> le patch ne fait rien
-			}
-			//On doit substituer la ligne Al par Bc
-			else{
-				printf("= %d\n",pi);
-				while( (car=*(pB+(*(mem+pos_tab(pi,pj))).l_cpy+i))!='\n'){
-					i++;
-					printf("%c",car);
-				}
-				printf("\n");
-				i=0;
-			}
-		}
-		//Cas de l'addition
-		else if( (pi==l) && (pj==c+1) ){
-			printf("+ %d\n",pi);
-			while( (car=*(pB+(*(mem+pos_tab(pi,pj))).l_cpy+i))!='\n'){
-				i++;
-				printf("%c",car);
-			}
-			printf("\n");
-			i=0;
-		}
-		//Cas de la deletion simple
-		else if( (pi==l+1) && (pj==c)){
-			printf("d %d\n",pi);	
-		}
-		//Cas de la deletion multiple
-		else{
-			printf("D %d %d\n",l+1,pi-l);
-		}
-		//		if(compteur>=m/100){
-		//			compteur = 0;
-		//			printf("#");
-		//		}
-		//		else{
-		//		compteur++;
-		//		}
-		l = (*(mem+pos_tab(lTmp,cTmp))).pereI;
-		c = (*(mem+pos_tab(lTmp,cTmp))).pereJ;
-		cTmp = c;
-		lTmp = l;
-	}while(l<n || c<m);
-
-
-	//	printf(" 100%%\n");
-	//	printf("-------------- Patch écrit dans '%s'\n",argv[3]);
 	munmap(pA,statsA.st_size);
 	munmap(pB,statsB.st_size);
 	free(mem);
 	close(fA);
 	close(fB);
-	//Permet l'affiche graphique du résultat et du temps d'exécution
-	/*	fclose(p);
-		if( gettimeofday(&tempsFmain, NULL) ){
-		printf(" erreur getTimeOfDay fin !! ");
-		}
-		else{
-		suseconds_t timeFmain = tempsFmain.tv_sec*1000000 + tempsFmain.tv_usec;
-		suseconds_t timeDmain = tempsDmain.tv_sec*1000000 + tempsDmain.tv_usec;
-		int sec =(int)((timeFmain - timeDmain)/1000000);
-		int usec =(int)((timeFmain - timeDmain)-1000000*sec);
-		int min = 0;
-		if (sec>=60){
-		min = sec/60;
-		sec = sec%60;
-		}
-		printf("#############################################################\n");
-		printf("--------------- Temps total de l'opération ------------------\n");
-		printf("--------------- %02dmin %02dsec %06dus ------------------------\n",min,sec,usec);
-		printf("#############################################################\n");
-		}
-		*/
 	return EXIT_SUCCESS;
 }/* ----------  end of function main  ---------- */
