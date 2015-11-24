@@ -36,23 +36,24 @@ MAHIEU LUCAS étudiant$_1$ (SLE\_PHELMA$_1$)
 \section{Principe de notre  programme (1 point)}
 {Nous avons choisi d'implementer un algorithme itératif car cela nous paraissait plus efficace qu'un algorithme récursif qui aurait du faire un très grand nombre d'appel et potentiellement remplir entièrement la pile, pour des fichiers volumineux.
 \\ \indent Ainsi nous parcourons une à une toutes les configurations de fichier possible : de $A_0$,$B_0$ à $A_n$,$B_n$, et mémorisons le cout de la configuration à chaque itération.
-\\ \indent Pour pouvoir retrouver, à la fin, par quelle configuration nous sommes arrivé à $A_n$,$B_n$, nous mémorisons aussi les indices de la configuration mère ainsi que la chaine de caractère qu'il faudra afficher dans le patch dans le cas ou celui-ci passe par cette configuration.
-\\ \indent Pour mémoriser ces informations, nous avons utiliser un tableau de taille (n+1)*(m+1) qui contient des structures appelées 'cellule'. Elles sont définies comme ceci:
+\\ \indent Pour pouvoir retrouver, à la fin, par quelle configuration nous sommes arrivé à $A_n$,$B_n$, nous mémorisons aussi les indices de la configuration mère ainsi que le numéro du 1er caractère de la ligne qu'il faudra afficher dans le patch dans le cas ou celui-ci passe par cette configuration.
+\\ \indent Pour mémoriser ces informations, nous avons utiliser un tableau de taille (n+1)*(m+1) {\em Mono-dimensionel} qui contient des structures appelées 'cellule'. Ce tableau sera repérée par la variable globale '(cellule*)mem'. Elles sont définies comme ceci:
 {\em \\typedef struct  \{
-\\ \indent int cout,
-\\ \indent char* cmd,
-\\ \indent int pereI,
-\\ \indent int pereJ \} cellule;}
+\\ \indent int cout, -> qui correspond au cout pour arriver dans cette configuration.
+\\ \indent size\_t l\_cpy, -> qui contiendra le $1_{er}$ octet de la ligne à recopier dans le patch pour les opération '+' et '='.
+\\ \indent int pereI, -> qui contient la position i de la cellule ayant donné le coût min pour la cellule en question
+\\ \indent int pereJ -> qui contient la position j de la cellule ayant donné le coût min pour la cellule en question\} cellule;}
 \\ \indent Pour mieux comprendre nous avons schématiser ce que notre algorithme fait pour l'exemple du sujet. Voir figure~\ref{étiquette} page~\pageref{étiquette} 
 
 \begin{figure}[!h]
 \hspace{2cm}
 	\includegraphics[scale=0.5]{tableau_mem.png}
-	\caption{\label{étiquette} Exemple de parcours itératif de notre algorythme pour l'exemple du sujet}
+	\caption{\label{étiquette} Exemple de parcours itératif de notre algorithme pour l'exemple du sujet}
 \end{figure}
  \indent Notre algorithme commence dans l'état $A_0$,$B_0$ et calcule colonne par colonne tous les coûts de toutes des configurations. Pour ce faire, à l'étape $A_i$,$B_j$, le coût sera : \\ min \{ ($A_{i-1}$,$B_{j-1}$) + 10+L, ($A_i$,$B_{j-1}$) + 10+L, min\{ ($A_{i-k}$,$B_j$) + 15\} \}
- \\ C'est ce que représente partiellement la figure en bas à droite de la figure~\ref{étiquette} page~\pageref{étiquette} 
+ \\ C'est ce que représente partiellement (sans l'opération 'D') la figure en bas à droite de la figure~\ref{étiquette} page~\pageref{étiquette} 
  \\ \indent Lorsque l'on arrive dans l'état $A_n$,$B_m$, on va remonter le chemin des pères. Donc en $A_i$,$B_j$ on ira en $A_{péreI}$,$B_{péreJ}$ en {\em 'échangeant'} la valeur des pères pour qu'une fois en $A_0$,$B_0$ on puisse redescendre en $A_n$,$B_m$ par le chemin de coût optimal tout en l'affichant.
+ \\ \indent De plus, pour améliorer les performances, nous utilisons la commande 'mmap' pour les fichiers F1 et F2, qui permet de lire dans les fichiers en coût constant $\Theta$(1).
  } 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
