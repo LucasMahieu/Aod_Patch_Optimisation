@@ -23,18 +23,9 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <sys/time.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <fcntl.h>
-#include <unistd.h>
-
 
 
 int computePatchOpt_it(int, int);
-int pos_tab(int i, int j);
-int CmpLine(char* p1, size_t pos1, char* p2, size_t pos2);
-int GetLineA(char* p, size_t* pos);
-int GetLineB(char* p, size_t* pos);
 /**
  * \struct "cellule" qui contient pour chaque combinaison de ligne AiBj 
  * le cout min, 
@@ -43,7 +34,7 @@ int GetLineB(char* p, size_t* pos);
  */
 typedef struct {
 	int cout;
-	size_t l_cpy;
+	fpos_t l_cpy;
 	int pereI;
 	int pereJ;
 } cellule;
@@ -51,21 +42,15 @@ typedef struct {
 /**
  * Variable globale: Pointeur qui servira à stocker toutes les cellules
  */
-cellule* mem = NULL;
+cellule** mem = NULL;
 /**
- * Pointeur vers la zone mem fA
+ * Variable globale: Fichier d'entrée
  */
-int fA;
-struct stat statsA;
-int nb_ligne_A;
-char* pA;
+FILE* fA;
 /**
- * Pointeur vers la zone mémoire de fB
+ * Variable globale: Fichier de sortie
  */
-int fB;
-char* pB;
-struct stat statsB;
-int nb_ligne_B;
+FILE* fB;
 
 /**
  * \fn int computePatchOpt_it (int n, int m)
@@ -88,9 +73,11 @@ int computePatchOpt_it(int n, int m)
 	//! -------------------------------
 	int i=0, j=0;
 	int min = 0, cout=0;
-//	char* tmpA = NULL;
-//	char* tmpB = NULL;
-	size_t posB=0, posA=0;
+	char* tmpA = NULL;
+	size_t lA = 0;
+	char* tmpB = NULL;
+	size_t lB = 0;
+	fpos_t l_pos=0;
 	int lBlen=0, lAlen=0;
 	int cd = 10, cD=15, ca=0, cs=0;
 	int pi=0,pj=0;
@@ -98,33 +85,41 @@ int computePatchOpt_it(int n, int m)
 	int add=0, sub=0, del=0, Del=0;
 	int sumB=0;
 	//! -------------------------------
+	rewind(fB);
 	for(j = 0; j <=m; j++) {
 		if (j!=0) {
-			lBlen = GetLineB(pB, &posB);
-			sumB += 10 + posB;
+			fgetpos(fB, &l_pos);
+			lBlen = getline(&tmpB, &lB, fB);
+			sumB += 10 + lBlen;
 		}
+		rewind(fA);
 		iD=0;
 		for(i = 0; i <=n; i++) {
 			if(i!=0){
-				posA += lAlen;
-				lAlen = GetLineA(pA, &posA);
+				lAlen = getline(&tmpA, &lA, fA);
 			}
 			// i=j=0	
 			if (i==0) {
 				if (j==0) {
-					(*(mem+pos_tab(0,0))).cout = 0;
-					(*(mem+pos_tab(0,0))).pereI = 0;
-					(*(mem+pos_tab(0,0))).pereJ = 0;
+					mem[0][0].cout = 0;
+					mem[0][0].pereI = 0;
+					mem[0][0].pereJ = 0;
 				}
 				//i=0 et j!=0  -> f(0,j) = sum(10+LkB) avec k=1..j, calculé à chaque getline
 				else{
+				//	rewind(fB);
+				//	for(k=1; k<=j; k++){
+				//		lBlen = getline(&tmpB, &lB,fB);
+				//		L += 10 + lBlen;
+				//	}
 					pi = i;
 					pj = j-1;
+					//if( (ecrit = sprintf(toPrint,"+ %d\n%s",i,tmpB))==-1){
 					//Maj du cout, de la cmd, et des peres pour retrouver le chemin
-					(*(mem+pos_tab(0,j))).cout = sumB; 
-					(*(mem+pos_tab(0,j))).l_cpy = posB;
-					(*(mem+pos_tab(0,j))).pereI = pi; 
-					(*(mem+pos_tab(0,j))).pereJ = pj; 
+					mem[0][j].cout = sumB; 
+					mem[0][j].l_cpy = l_pos;
+					mem[0][j].pereI = pi; 
+					mem[0][j].pereJ = pj; 
 				}
 			} 
 			// i!=0 
@@ -133,25 +128,27 @@ int computePatchOpt_it(int n, int m)
 				if (j==0) {
 					// Si i=1, deletion coute 10
 					if (i==1) {
-						(*(mem+pos_tab(i,0))).cout = 10;
+						//if ((ecrit = sprintf(toPrint,"d %d\n",i)) ==-1){
+						mem[i][0].cout = 10;
 						pi = i-1;
 						pj = j;
 					}
 					// j=0 et i!=1
 					else{
 						// Si i>1, deletion coute 15
-						(*(mem+pos_tab(i,0))).cout = 15;
+						//if( (ecrit = sprintf(toPrint,"D %d %d\n",1,i))==-1){
+						mem[i][0].cout = 15;
 						pi = i-i;
 						pj = j;
 					}
-					(*(mem+pos_tab(i,0))).pereI = pi; 
-					(*(mem+pos_tab(i,0))).pereJ = pj; 
+					mem[i][0].pereI = pi; 
+					mem[i][0].pereJ = pj; 
 				}
 				// i!=0 et j!=0
 				else {
 					// Pour comparer Li(A) et Lj(B) n regarde d'abords leur taille	
 					if (lBlen == lAlen){
-						if(CmpLine(pA,posA,pB,posB) == 1){
+						if(strcmp(tmpA,tmpB) == 0){
 							//Même taille et même chaine 
 							cs = 0;
 						}
@@ -166,35 +163,34 @@ int computePatchOpt_it(int n, int m)
 					}
 					ca = 10 + lBlen;
 					// Calcules du cout des 3 opérations possibles
-					add = (*(mem+pos_tab(i,j-1))).cout + ca;
-					sub = (*(mem+pos_tab(i-1,j-1))).cout + cs;
-					del = (*(mem+pos_tab(i-1,j))).cout + cd;
-					Del = (*(mem+pos_tab(iD,j))).cout + cD;
+					add = mem[i][j-1].cout + ca;
+					sub = mem[i-1][j-1].cout + cs;
+					del = mem[i-1][j].cout + cd;
+					Del = mem[iD][j].cout + cD;
 					// On selectionne l'opération de cout min
 					min = sub;
 					if(cs == 0){
+						//ecrit = sprintf(toPrint,"");
 						pi = i-1;
 						pj = j-1;
 					}
-					// '= i\n%s'
 					else{
+						//if((ecrit = sprintf(toPrint,"= %d\n%s",i,tmpB))==-1){
 						pi = i-1;
 						pj = j-1;
 					}
-					// '+ i\n%s'
 					if( add<=min ){
 						min = add;
+						//if((ecrit = sprintf(toPrint,"+ %d\n%s",i,tmpB))==-1){
 						pi = i;
 						pj = j-1;
 					}
-					//'d i\n'
 					if( del<min ){
 						min = del;
 						//if((ecrit = sprintf(toPrint,"d %d\n",i))==-1){
 						pi = i-1;
 						pj = j;
 					}
-					// 'D iD+1 i-iD\n'
 					if( Del<min ){
 						min = Del;
 						//if((ecrit = sprintf(toPrint,"D %d %d\n",iD+1,i-iD))==-1){
@@ -202,12 +198,12 @@ int computePatchOpt_it(int n, int m)
 						pj = j;
 					}
 					// Maj du cout, de la cmd, et de l'opération qui a donnée ce min
-					(*(mem+pos_tab(i,j))).cout = min;
-					(*(mem+pos_tab(i,j))).l_cpy = posB;
-					(*(mem+pos_tab(i,j))).pereI = pi;
-					(*(mem+pos_tab(i,j))).pereJ = pj;
+					mem[i][j].cout = min;
+					mem[i][j].l_cpy = l_pos;
+					mem[i][j].pereI = pi;
+					mem[i][j].pereJ = pj;
 					// On stock dans iD le min des cout de la colonne i
-					if(min<=(*(mem+pos_tab(iD,j))).cout) {
+					if(min<=mem[iD][j].cout) {
 						iD=i;
 					}
 				}
@@ -216,15 +212,15 @@ int computePatchOpt_it(int n, int m)
 	}
 	i = i-1;
 	j = j-1;
-	cout = (*(mem+pos_tab(i,j))).cout;
+	cout = mem[i][j].cout;
 	int prevPi=n, prevPj=m;
 	int futurPi=-1, futurPj=-1;
 
 	do{
-		prevPi = (*(mem+pos_tab(i,j))).pereI;
-		prevPj = (*(mem+pos_tab(i,j))).pereJ;
-		(*(mem+pos_tab(i,j))).pereI = futurPi;
-		(*(mem+pos_tab(i,j))).pereJ = futurPj;
+		prevPi = mem[i][j].pereI;
+		prevPj = mem[i][j].pereJ;
+		mem[i][j].pereI = futurPi;
+		mem[i][j].pereJ = futurPj;
 		futurPi = i;
 		futurPj = j;
 		i = prevPi;
@@ -249,77 +245,10 @@ int computePatchOpt_it(int n, int m)
 		printf("-------------- %02dminutes %02dsec %06dus -------------------------\n",min,sec,usec);
 		}
 		*/
-//	free(tmpA);
-//	free(tmpB);
+	free(tmpA);
+	free(tmpB);
 	return cout;
 }
-
-/**
- * Avance la position du nombre de char lu
- * retourne le nombre de char lu
- */
-int GetLineA(char* p, size_t* pos)
-{
-	char c;
-	int len=0;
-	while((*pos<statsA.st_size)&&((c=*(p+(*pos))) != '\n')){
-		(*pos)++;
-		len++;
-	}
-	if((*pos)>=statsA.st_size){
-		return -1;
-	}
-	(*pos)++;
-	return len+1;
-}
-int GetLineB(char* p, size_t* pos)
-{
-	char c;
-	int len=0;
-	while((*pos<statsB.st_size)&&((c=*(p+(*pos))) != '\n')){
-		(*pos)++;
-		len++;
-	}
-	if((*pos)>=statsA.st_size){
-		return -1;
-	}
-	(*pos)++;
-	return len+1;
-}
-
-/**
- * Compare la ligne en pos1 de p1, et la ligne en pos2 de p2
- * \return 0 si les lignes sont differentes
- * \return 1 si les lignes sont identiques
- */
-int CmpLine(char* p1, size_t pos1, char* p2, size_t pos2)
-{
-	char c1,c2;
-	while( ((c1=*(p1+pos1))!='\n') && ((c2=*(p2+pos2))!='\n') ){
-		if(c1!=c2){
-			return 0;
-		}
-	}
-	if(c1=='\n'){
-		if(c2=='\n'){
-			return 1;
-		}
-		else{
-			return 0;
-		}
-	}
-	else{
-		return 0;
-	}
-
-}
-
-int pos_tab(int i, int j)
-{
-	return (i*nb_ligne_A + j);
-}
-
-
 
 /**
  * \fn int main ( int argc, char* argv[] )
@@ -346,59 +275,52 @@ int main ( int argc, char* argv[] )
 	//	printf("-------------- Sortie du Patch : %s\n",argv[2]);
 	int n = 0;
 	int m = 0;
-
-/*	   struct timeval tempsDmain;
+	int i = 0;
+	int j = 0;
+	/*
+	   struct timeval tempsDmain;
 	   struct timeval tempsFmain;
 	   if( gettimeofday(&tempsDmain,NULL)){
 	   printf("erreur GetTimeOfDay !!! ");
 	   return -1;
 	   }
 	   */
-	
+	if((fA = fopen(argv[1], "r")) == NULL){
+		printf("Erreur fopen f1");
+		return -1;
+	}
+	if((fB = fopen(argv[2], "r")) == NULL){
+		printf("Erreur fopen f2");
+		return -1;
+	}
 
-	if(stat(argv[1], &statsA)){
-		printf("Erreur stat f1");
-		return -1;
-	}
-	if(stat(argv[2], &statsB)){
-		printf("Erreur stat f2");
-		return -1;
-	}
-	if((fA = open(argv[1], O_RDONLY)) < 1){
-		printf("Erreur open f1");
-		return -1;
-	}
-	if((fB = open(argv[2], O_RDONLY)) < 1){
-		printf("Erreur open f2");
-		return -1;
-	}
-	
-	
-	if(!(pA = (char*)mmap(NULL, statsA.st_size, PROT_READ, MAP_PRIVATE, fA,0 ))){
-		printf("Erreur mmap f1");
-		close(fA);
-		return -1;
-	}
-	if(!(pB = (char*)mmap(NULL, statsB.st_size, PROT_READ, MAP_PRIVATE, fB, 0))){
-		printf("Erreur mmap f2");
-		close(fB);
-		return -1;
-	}
-// Calcul du nombre de ligne de fA et fB
-	size_t ligneA=0, ligneB=0;
-	while( GetLineA(pA,&ligneA)!=-1){
+	//tmp sert juste à stocker une ligne d'un fichier pour compter le nombre de ligne
+	char tmp[500];
+	// On calcule le nombre de lignes de F1
+	while (fgets(tmp,500, fA)!=NULL) {
 		n++;
 	}
-	nb_ligne_A = n;
-	while((GetLineB(pB,&ligneB))!=-1){
+	// On calcule le nombre de lignes de F2
+	while (fgets(tmp, 500, fB)!= NULL) {
 		m++;
 	}
-	nb_ligne_B = m;
-
-	mem = (cellule*)malloc((n+1)*(m+1)*sizeof(*mem));
-	
-
-
+	// On créer le taleau de memorisation de taille (n+1)*(m+1)
+	if( (mem =(cellule**)calloc(n+1, sizeof(*mem))) == NULL) {
+		printf("Erreur calloc");
+		return -1;
+	}
+	for (i = 0; i < n+1; i++) {
+		if( (mem[i] = (cellule*)calloc(m+1, sizeof(**mem))) == NULL) {
+			printf("Erreur calloc");
+			return -1;
+		}
+		for (j = 0;  j< m+1; j++) {
+			mem[i][j].cout = 0;
+			mem[i][j].l_cpy = 0;
+			mem[i][j].pereI = 0;
+			mem[i][j].pereJ = 0;
+		}
+	}
 	int cout = computePatchOpt_it(n,m);
 	printf("%d\n",cout);
 	//	printf("-------------- Coût du Patch :  %d \n",computePatchOpt_it(n,m));
@@ -413,33 +335,29 @@ int main ( int argc, char* argv[] )
 	int l=0, c=0,lTmp=l, cTmp=c;
 	int pi=0, pj=0;
 	char* str=NULL;
-	char car;
+	size_t lB=0;
 	do{
-		pi = (*(mem+pos_tab(l,c))).pereI;
-		pj = (*(mem+pos_tab(l,c))).pereJ;
+		pi = mem[l][c].pereI;
+		pj = mem[l][c].pereJ;
 		//fputs(mem[l][c].cmd,p);
 		// Cas de la SUBTITUTION		
 		if( (pi==l+1) && (pj==c+1) ){
 			// Al = Bc -> cout = 0
-			if((*(mem+pos_tab(l,c))).cout == (*(mem+pos_tab(pi,pj))).cout){
+			if(mem[l][c].cout == mem[pi][pj].cout){
 				//On doit recopier Al sur la sortie -> le patch ne fait rien
 			}
 			//On doit substituer la ligne Al par Bc
 			else{
-				printf("= %d\n",pi);
-				while( (car=*(pB+(*(mem+pos_tab(pi,pj))).l_cpy))!='\n'){
-					printf("%c",car);
-				}
-				printf("\n");
+				fsetpos(fB, &mem[pi][pj].l_cpy);
+				getline(&str, &lB, fB);
+				printf("= %d\n%s",pi,str);
 			}
 		}
 		//Cas de l'addition
 		else if( (pi==l) && (pj==c+1) ){
+			fsetpos(fB, &mem[pi][pj].l_cpy);
+			getline(&str, &lB, fB);
 			printf("+ %d\n%s",l,str);
-			while( (car=*(pB+(*(mem+pos_tab(pi,pj))).l_cpy))!='\n'){
-				printf("%c",car);
-			}
-			printf("\n");
 		}
 		//Cas de la deletion simple
 		else if( (pi==l+1) && (pj==c)){
@@ -456,8 +374,8 @@ int main ( int argc, char* argv[] )
 		//		else{
 		//		compteur++;
 		//		}
-		l = (*(mem+pos_tab(lTmp,cTmp))).pereI;
-		c = (*(mem+pos_tab(lTmp,cTmp))).pereJ;
+		l = mem[lTmp][cTmp].pereI;
+		c = mem[lTmp][cTmp].pereJ;
 		cTmp = c;
 		lTmp = l;
 	}while(l<n || c<m);
@@ -465,11 +383,12 @@ int main ( int argc, char* argv[] )
 
 	//	printf(" 100%%\n");
 	//	printf("-------------- Patch écrit dans '%s'\n",argv[3]);
-	munmap(pA,statsA.st_size);
-	munmap(pB,statsB.st_size);
+	for (i = n;  i>-1; i--) {
+		free(mem[i]);
+	}
 	free(mem);
-	close(fA);
-	close(fB);
+	fclose(fA);
+	fclose(fB);
 	//Permet l'affiche graphique du résultat et du temps d'exécution
 	/*	fclose(p);
 		if( gettimeofday(&tempsFmain, NULL) ){
