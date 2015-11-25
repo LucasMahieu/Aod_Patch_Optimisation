@@ -8,6 +8,7 @@
    \RequirePackage{lmodern,tgpagella} % Police de caractères
    \textwidth 17cm \textheight 25cm \oddsidemargin -0.24cm % Définition taille de la page
    \evensidemargin -1.24cm \topskip 0cm \headheight -1.5cm % Définition des marges
+
    \RequirePackage{latexsym}                  % Symboles
    \RequirePackage{amsmath}                   % Symboles mathématiques
    \RequirePackage{tikz}   % Pour faire des schémas
@@ -69,37 +70,37 @@ et $c_1$ et $c_2$ de caractères des deux fichiers en entrée.
     \paragraph{Justification\,: }
     {
     	Comme la partie 1 l'explique, nous stockons en mémoire $(n+1)*(m+1)$ états sachant que 1 état prend un place de $4*sizeof(int)$, nous mémorisons $4*sizeof(int)*(n+1)*(m+1)$ octets.
-	\\De plus, en utilisant mmap, nous 'mappons' en mémoire les fichiers d'entrée et de sortie, ainsi nous utilisons $(c1+c2)$ octet de plus. \\Ce qui fait un totale de $4*sizeof(int)*(n+1)*(m+1) + (c1+c2)$
+	\\De plus, en utilisant mmap, nous 'mappons' en mémoire les fichiers d'entrée et de sortie, ainsi nous utilisons $(c1+c2)$ octet de plus. \\Ce qui fait un total de $4*sizeof(int)*(n+1)*(m+1) + (c1+c2)$
     }
 
   \subsection{Nombre de défauts de cache sur le modèle CO\,: }
     \paragraph{Justification\,: }
+    { Nous utilisons deux boucles for imbriquées de telle sorte qu'on parcourt le tableau séquentiellement avec un pas unitaire. On respecte ainsi le principe de localité spatiale et on limite donc le nombre de défauts de cache. D'après la simulation présentée dans le cours, pour un parcours itératif d'un tableau en STRIDE 1 de 1,000,000 de lignes on pouvait observer un nombre de défauts de cache de 378,448. Ici, on s'attendra donc à un résultat similaire (proportionnellement au produit $n_1*n_2$).
+    
+    La figure~\ref{étiquette} page~\pageref{étiquette} illustre la forme de notre tableau en mémoire. Nos boucles sont créées de la façon suivante : \\ for( j=0; j<$n_2$; j++) \{ \\ \indent for( i=0 ; i< $n_1$; i++)\{ \\ \indent \indent ... Calcul du coût \\ \indent \} \\ \}
+	\begin{figure}[!h]
+\hspace{1cm}
+	\includegraphics[scale=0.6]{zone_mem.png}
+	\caption{\label{étiquette} Zone mémoire allouée}
+\end{figure}
+    
+    }
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Compte rendu d'expérimentation (2 points)}
   \subsection{Conditions expérimentaless}
-     {\em Décrire les conditions permettant la reproductibilité des mesures: on demande la description
-      de la machine et la méthode utilisée pour mesurer le temps.
-     }
-
+  
     \subsubsection{Description synthétique de la machine\,:} 
-      {\em indiquer ici le  processeur et sa fréquence, la mémoire, le système d'exploitation. 
-       Préciser aussi si la machine était monopolisée pour un test, ou notamment si 
-       d'autres processus ou utilisateurs étaient en cours d'exécution. 
+      {Les tests ont été effectués sur un MacBookPro équipé d'un processeur intel Core 2 Duo (1 processeur à 2 coeurs), de 2,4GHz. La mémoire RAM disponible est de 10Go ainsi que 3Mo de mémoire cache. Le système d'exploitation utilisé est Mac OS X El Capitan 10.11.1. Durant le test aucun autre programme était en cours d'utilisation.
       } 
 
     \subsubsection{Méthode utilisée pour les mesures de temps\,: } 
-      {\em préciser ici  comment les mesures de temps ont été effectuées (fonction appelée) et l'unité de temps; en particulier, 
-       préciser comment les 5 exécutions pour chaque test ont été faites (par exemple si le même test est fait 5 fois de suite, ou si les tests sont alternés entre
-       les mesures, ou exécutés en concurrence etc). 
+      {Les mesures présentées ci dessous ont été effectué grace à a fonction UNIX {\em time}.Les valeurs sont données en secondes et correspondent au temps système, c'est à dire le temps qu'a mis le système à executer le programme. Les tests ont été effectués successivement benchmark par benchmark.
       }
 
   \subsection{Mesures expérimentales}
-    {\em Compléter le tableau suivant par les temps d'exécution mesurés pour chacun des 6 benchmarks imposés
-              (temps minimum, maximum et moyen sur 5 exécutions)
-    }
-
+  
     \begin{figure}[h]
       \begin{center}
         \begin{tabular}{|l||r||r|r|r||}
@@ -109,34 +110,51 @@ et $c_1$ et $c_2$ de caractères des deux fichiers en entrée.
             & du patch     & min       & max     & moyen \\
           \hline
           \hline
-            benchmark1 &      &     &     &     \\
+            benchmark1 &2540 &0,023      &0,026     &0,024      \\
           \hline
-            benchmark2 &      &     &     &     \\
+            benchmark2 &3120      &0,092     &0,100     &0,096     \\
           \hline
-            benchmark3 &      &     &     &     \\
+            benchmark3 &809      &0,180     &0,181     &0,180     \\
           \hline
-            benchmark4 &      &     &     &     \\
+            benchmark4 &1708      &0,322     &0,330     &0,326     \\
           \hline
-            benchmark5 &      &     &     &     \\
+            benchmark5 &7553      &0,503     &0,513     &0,509     \\
           \hline
-            benchmark6 &      &     &     &     \\
+            benchmark6 &37027      &2,214     &2,240     &2,230     \\
           \hline
           \hline
         \end{tabular}
-        \caption{Mesures des temps minimum, maximum et moyen de 5 exécutions pour les 6 benchmarks.}
+        \caption{Mesures des temps minimum, maximum et moyen de 5 exécutions pour les 6 benchmarks.(sec)}
         \label{table-temps}
       \end{center}
     \end{figure}
 
 \subsection{Analyse des résultats expérimentaux}
-{\em Donner  une réponse justifiée  à la question\,: 
-              les  temps mesurés correspondent ils  à votre analyse théorique (nombre d’opérations et défauts de cache) ?
-}
+\paragraph{Justification\,: }
+	{ 
+	On observe un nombre de défauts de cache LL de 407,583 pour 1,314,910 références (pour l'execution de computePatchOpt sur le Benchmark\_01 pour lequel $n_1=1000 et n_2=1047$) (voir figure~\ref{cccc} page~\pageref{cccc}). 
+Ceci est donc cohérent avec notre algorithme et nos attentes en comparaison avec le parcours du tableau de 1,000,000 de lignes en STRIDE 1.
+    	\begin{figure}[!h]
+\hspace{1cm}
+	\includegraphics[scale=0.6]{cache_LL.png}
+	\caption{\label{cccc} Exemple de parcours itératif de notre algorithme pour l'exemple du sujet}
+\end{figure}
+     }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Question\,: et  si le coût d'un patch était sa taille en octets ? (1 point)}
-{\em Préciser le principe de la résolution choisie (parmi celles vues en cours); donner  les modifications à apporter (soit à vos  équations, soit à votre programme, au choix) 
-pour s'adapter à cette nouvelle fonction de coût. 
+\paragraph{Justification\,: }
+{
+Pour ce faire il faudrait changer le coût de chaque opération en le définissant comme le nombre d'octet à afficher dans le patch.
+Concrètement cela reviendrait à :
+\begin{itemize}
+	\item Délétion : coût de 7 car ' d k '  coûte 7 octets si k est un int sur 32 bits
+	\item Délétion multiple : coût de 12 car ' D k m ' coûte 12 octets si k et m sont des int sur 32 bits
+	\item Addition : coût de 7 + $L_k(B)$ car ' + k ' coûte 7 octets si k est un int sur 32 bits
+	\item Substitution : coût de 7 + $L_k(B)$ car ' = k ' coûte 7 octets si k est un int sur 32 bits
+\end{itemize}
+De cette façon les deletions deviennent plus rentable globalement. On obtient alors le patch de coût minimum en terme de nombre d'octets à écrire dans le patch.
+
 }
 
 \end{document}

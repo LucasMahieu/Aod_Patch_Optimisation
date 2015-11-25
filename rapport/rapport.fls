@@ -237,3 +237,10 @@ OUTPUT rapport.pdf
 INPUT ./tableau_mem.png
 INPUT /usr/local/texlive/2015/texmf-dist/fonts/tfm/public/tex-gyre/ec-qplr-sc.tfm
 INPUT /usr/local/texlive/2015/texmf-var/fonts/map/pdftex/updmap/pdftex.map
+INPUT /usr/local/texlive/2015/texmf-dist/fonts/tfm/public/tex-gyre/ec-qplb.tfm
+INPUT zone_mem.png
+INPUT ./zone_mem.png
+INPUT ./zone_mem.png
+INPUT cache_LL.png
+INPUT ./cache_LL.png
+INPUT ./cache_LL.png
